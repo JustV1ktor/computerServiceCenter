@@ -2,16 +2,15 @@ const mongoose = require('mongoose')
 
 const Schema = mongoose.Schema
 
-const user = new Schema({
-    login: {
-        type: String,
-        unique: true,
+const carts = new Schema({
+    userID: {
+        type: Object,
         require: true
     },
-    password: {
+    service: {
         type: String,
         require: true
     }
 })
 
-module.exports = mongoose.model('User', user)
+module.exports = mongoose.model('Carts', carts)
