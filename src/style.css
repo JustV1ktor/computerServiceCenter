@@ -1,5 +1,17 @@
 html {
     height: 100%;
+    overflow-x: hidden
+}
+
+.input-sign-up {
+    background: #FFFFFF;
+    border: none;
+
+    padding: 10px;
+    height: 100%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    margin: 5px;
 }
 
 #app {
@@ -9,7 +21,7 @@ html {
     justify-content: space-evenly;
 }
 
-body{
+body {
     background-color: #F9F9F9;
     height: 100%;
     margin: 0;
@@ -19,7 +31,7 @@ td {
     padding: 0 20px;
 }
 
-.header{
+.header {
     position: absolute;
     display: flex;
     padding-left: 20px;
@@ -40,16 +52,40 @@ td {
     font-style: italic;
 }
 
-.header-container{
+.header-container {
     gap: 20px;
     display: flex;
     height: 80%;
 }
 
+.office-label {
+    margin: 15px 0 5px 0;
+}
+
+.button-content {
+    background: #FFFFFF;
+    border: none;
+    transition: 0.3s;
+    width: auto;
+    padding: 10px;
+    margin: 5px;
+    height: 100%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.button-content:hover {
+    background: #f1f1f1
+}
+
+.button-content:active {
+    background: #8c8c8c
+}
+
 .button-head {
     background: #FFFFFF;
     border: none;
-    transition: 0.5s;
+    transition: 0.3s;
     width: 80px;
     height: 100%;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -60,6 +96,10 @@ td {
     background: #f1f1f1
 }
 
+.button-head:active {
+    background: #d7d7d7
+}
+
 .container-wrapper {
     display: flex;
     flex-direction: column;
@@ -67,9 +107,18 @@ td {
     margin-top: 100px;
 }
 
-.main-content{
+.main-content {
     text-align: center;
     margin-bottom: 50px;
+}
+
+.full-width {
+    display: flex;
+    justify-content: center
+}
+
+.service-label {
+    width: 20ch;
 }
 
 .item {
@@ -80,16 +129,78 @@ td {
 
 .content-row {
     display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
 
 .content {
+    margin: 17px;
+    padding: 30px;
     width: 40ch;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
     text-align: justify;
+}
+
+.table {
+    margin: 17px;
+    padding: 30px;
+    width: auto;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.table-tr {
+    display: flex;
+    margin: 17px;
+    padding: 5px;
+    width: auto;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.table-head {
+    right: 50px;
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    position: relative;
+}
+
+.table-head.info {
+    right: 0;
 }
 
 img {
     height: 300px;
-    object-fit: contain;
+    width: 390px;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.sign-up {
+    padding: 121px 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.office {
+    padding: 51px 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.button-row {
+    display: flex;
+    align-items: center;
 }
 
 .footer {
@@ -110,6 +221,39 @@ img {
 .footer-container {
     gap: 20px;
     display: flex;
+}
+
+.sign-up-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.cart-outer {
+    position: absolute;
+    right: -200px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    transition: 0.7s;
+}
+
+.cart-outer.show {
+    right: 5px;
+}
+
+.cart-inner {
+    margin: 20px;
+    padding: 10px;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+}
+
+.cart-item {
+    margin: 10px 0;
+    width: 20ch;
 }
 
 .footer-content {
@@ -135,9 +279,14 @@ a:hover {
 }
 
 .about-content {
-    justify-content: center;
     display: flex;
-    width: 100%;
+    padding: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    width: 100ch;
+    flex-direction: column;
+    align-items: center;
 }
 
 .about-p {

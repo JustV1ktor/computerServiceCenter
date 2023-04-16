@@ -1,14 +1,15 @@
 const mongoose = require('mongoose')
+const {ObjectId} = require("mongodb");
 
 const Schema = mongoose.Schema
 
 const carts = new Schema({
     userID: {
-        type: Object,
+        type: ObjectId,
         require: true
     },
-    service: {
-        type: String,
+    serviceID: {
+        type: ObjectId,
         require: true
     }
 })

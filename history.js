@@ -1,18 +1,23 @@
 const mongoose = require('mongoose')
+const {ObjectId} = require("mongodb");
 
 const Schema = mongoose.Schema
 
 const history = new Schema({
-    userID: {
-        type: Object,
-        require: true
-    },
-    service: {
-        type: String,
-        require: true
-    },
     date: {
         type: Date,
+        require: true
+    },
+    userID: {
+        type: ObjectId,
+        require: true
+    },
+    serviceIDs: {
+        type: Array,
+        require: true
+    },
+    totalSum: {
+        type: Number,
         require: true
     }
 })

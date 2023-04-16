@@ -1,21 +1,27 @@
 <template>
-  <h1>Login</h1>
-  <form class="login" v-on:submit.prevent="sendPost">
-    <input v-model="login" type="text" placeholder="Login" required/>
-    <input v-model="password" type="text" placeholder="Password" required/>
-    <button type="submit">login</button>
-  </form>
-  <a href="/">
-    <button>Back</button>
-  </a>
-  <a href="/register">
-    <button>register</button>
-  </a>
+  <div class="sign-up">
+    <h1>Login</h1>
+    <form class="sign-up-content" v-on:submit.prevent="sendPost">
+      <input class="input-sign-up" v-model="login" type="text" placeholder="Login" required/>
+      <input class="input-sign-up" v-model="password" type="text" placeholder="Password" required/>
+      <a href="/">
+        <button class="button-content" type="submit">login</button>
+      </a>
+    </form>
+    <label class="">Не зареєстровані? Зареєструйтксь!</label>
+    <a href="/register">
+      <button class="button-content">register</button>
+    </a>
+    <a href="/">
+      <button class="button-content">Повернутись</button>
+    </a>
+  </div>
 </template>
 
 <script>
 export default {
   name: "App",
+  inject: ['refreshUser'],
   data() {
     return {
       login: '',
@@ -37,6 +43,7 @@ export default {
           }),
           mode: "cors"
         })
+        this.refreshUser()
         this.$router.push('/')
       } catch (err) {
         console.log(err)
@@ -45,7 +52,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>
