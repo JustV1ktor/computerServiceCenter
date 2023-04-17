@@ -2,20 +2,19 @@ const mongoose = require('mongoose')
 
 const Schema = mongoose.Schema
 
-const users = new Schema({
+const service = new Schema({
     name: {
         type: String,
-        unique: true,
         require: true
     },
-    password: {
+    description: {
         type: String,
         require: true
     },
-    token: {
+    price: {
         type: String,
         require: true
     }
 })
 
-module.exports = mongoose.model('Users', users)
+module.exports = mongoose.model('Service', service)

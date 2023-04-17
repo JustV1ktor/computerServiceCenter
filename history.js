@@ -1,20 +1,25 @@
 const mongoose = require('mongoose')
+const {ObjectId} = require("mongodb");
 
 const Schema = mongoose.Schema
 
-const user = new Schema({
-    userID: {
-        type: Object,
-        require: true
-    },
-    service: {
-        type: String,
-        require: true
-    },
+const history = new Schema({
     date: {
         type: Date,
+        require: true
+    },
+    userID: {
+        type: ObjectId,
+        require: true
+    },
+    serviceIDs: {
+        type: Array,
+        require: true
+    },
+    totalSum: {
+        type: Number,
         require: true
     }
 })
 
-module.exports = mongoose.model('User', user)
+module.exports = mongoose.model('History', history)
