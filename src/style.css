@@ -1,6 +1,11 @@
 html {
     height: 100%;
-    overflow-x: hidden
+    overflow-x: hidden;
+    font-family: system-ui;
+}
+
+button, input, textarea, select, option {
+    font-family: system-ui;
 }
 
 .input-sign-up {
@@ -50,6 +55,7 @@ td {
 
 .logo {
     font-style: italic;
+    color: coral;
 }
 
 .header-container {
@@ -72,6 +78,10 @@ td {
     height: 100%;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 5px;
+}
+
+.shadow {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .button-content:hover {
@@ -104,12 +114,12 @@ td {
     display: flex;
     flex-direction: column;
     overflow: auto;
-    margin-top: 100px;
+    margin-top: 70px;
+    height: 100%;
 }
 
 .main-content {
     text-align: center;
-    margin-bottom: 50px;
 }
 
 .full-width {
@@ -125,6 +135,7 @@ td {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding-bottom: 50px;
 }
 
 .content-row {
@@ -165,34 +176,98 @@ td {
     justify-content: space-around;
 }
 
+.editor-table {
+    width: 100%;
+    background: #FFFFFF;
+    text-align: center;
+}
+
+.editor-table-tr {
+    display: flex;
+    align-items: center;
+}
+
+.editor-table-tr > td {
+    width: 50%;
+}
+
+.editor-table-service{
+    display: flex;
+    align-items: center;
+}
+
+.editor-p-width > label {
+    display: flex;
+    text-align: justify;
+    text-indent: 2em;
+    line-height: 1.5;
+}
+
+.editor-table-service > td, .table-head-service > th{
+    padding: 5px;
+    width: 50%;
+}
+
+.editor-label-width {
+    width: 25% !important;
+}
+
+.editor-p-width {
+    width: 50% !important;
+}
+
+.user {
+    padding: 5px;
+}
+
+.editor-table-tr:nth-of-type(even) {
+    background-color: whitesmoke;
+}
+
 .table-head {
-    right: 50px;
     display: flex;
     width: 100%;
     justify-content: space-around;
     position: relative;
 }
 
+.table-head {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    position: relative;
+}
+
+.table-head-service {
+    display: flex;
+    width: 100%;
+}
+
 .table-head.info {
-    right: 0;
+    right: 50px;
 }
 
 img {
-    height: 300px;
+    height: 320px;
     width: 390px;
     object-fit: cover;
     border-radius: 20px;
 }
 
 .sign-up {
-    padding: 121px 0;
+    padding: 127px 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+}
+
+.sign-up-register {
+    display: flex;
+    padding: 23px 0;
     flex-direction: column;
 }
 
 .office {
-    padding: 51px 0;
+    padding: 10px 0;
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -209,10 +284,9 @@ img {
     justify-content: center;
 
     padding: 50px 0;
+    margin-top: auto;
     width: 100%;
     height: 120px;
-    left: 0;
-
 
     background: #FFFFFF;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
@@ -284,7 +358,7 @@ a:hover {
     background: #FFFFFF;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 20px;
-    width: 100ch;
+    width: 110ch;
     flex-direction: column;
     align-items: center;
 }
@@ -297,3 +371,228 @@ a:hover {
     text-indent: 2em;
     line-height: 1.5;
 }
+
+.label-position-off {
+    position: relative;
+    left: -100px;
+}
+
+.notification {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.notification-p {
+    text-align: center;
+    width: 35ch;
+}
+
+textarea {
+    resize: none;
+}
+
+
+.root {
+    position: relative;
+}
+
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.1);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal > div {
+    background-color: #FFFFFF;
+    padding: 50px;
+    border-radius: 10px;
+}
+
+.editor-field {
+    background: #FFFFFF;
+    border: none;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin: 10px 5px;
+}
+
+.editor-select {
+    border: none;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.history-no-content {
+    margin: 60px;
+    padding: 85px;
+    width: 35ch;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.history-no-content > p {
+    font-size: large;
+}
+
+.column {
+    display: flex;
+    float: left;
+    width: 33.33%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.column:nth-of-type(even) {
+    background-color: #FFFFFF;
+}
+
+.column:nth-of-type(odd) {
+    background-color: whitesmoke;
+}
+
+.row {
+    margin-bottom: 20px;
+}
+
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.coral {
+    color: coral;
+}
+
+.whitesmoke {
+    background-color: #B9B9B9FF;
+}
+
+.category-width {
+    width: 15ch;
+}
+
+.row-p {
+    width: 35ch;
+}
+
+.burger-menu {
+    width: 250px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #d5d5d5;
+}
+
+.item-editor {
+    display: flex;
+    flex-direction: row;
+}
+
+.item.foo {
+    flex: 1
+}
+
+.burger-button {
+    height: 45px;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: none;
+    background: white;
+    transition: 0.5s;
+}
+
+.burger-button + .burger-button, .editor-table-service + .editor-table-service{
+    border-top: 1px solid #d5d5d5
+}
+
+.burger-button-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.burger-button:hover {
+    background: #b6b6b6;
+}
+
+.card:before, .users:before, .list-menu:before {
+    width: 50px;
+    font-size: 20px;
+}
+
+.sad {
+    font-size: 80px;
+}
+
+.margin {
+    margin: 16px;
+}
+
+.gap {
+    display: flex;
+    gap: 10px;
+}
+
+.full-element-width {
+    width: 100%;
+}
+
+.service-buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.red {
+    background-color: #e10000;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+.yellow {
+    background-color: yellow;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+.light-green {
+    background-color: #a1eea1;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+.green {
+    background-color: #00ad00;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+.calendar, .microchip, .money, .cloak, .comments ,.star {
+    font-size: 50px;
+    color: coral;
+}
+
+.card:before{font-family: 'FontAwesome'; content: '\f022'}
+.users:before{font-family: 'FontAwesome'; content: '\f0c0'}
+.list-menu:before{font-family: 'FontAwesome'; content: '\f03a'}
+.sad:before{font-family: 'FontAwesome'; content: '\f119'}
+.calendar:before{font-family: 'FontAwesome'; content: '\f073'}
+.microchip:before{font-family: 'FontAwesome'; content: '\f2db'}
+.money:before{font-family: 'FontAwesome'; content: '\f0d6'}
+.cloak:before{font-family: 'FontAwesome'; content: '\f017'}
+.comments:before{font-family: 'FontAwesome'; content: '\f086'}
+.star:before{font-family: 'FontAwesome'; content: '\f005'}

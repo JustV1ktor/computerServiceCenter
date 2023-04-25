@@ -1,27 +1,17 @@
 <template>
-  <transition name="notification-animation">
-    <div v-show="isOpen" class="modal">
-      <transition name="notification-animation-inner">
-        <div v-show="isOpen" class="modal-inner">
-          <slot/>
-          <button>Закрити</button>
-        </div>
-      </transition>
-    </div>
-  </transition>
+  <div class="sign-up-content">
+    <h2>{{ title }}</h2>
+    <p class="notification-p">{{ text }}</p>
+    <button class="button-content" @click="$emit('close')">закрити</button>
+  </div>
 </template>
 
 <script>
-import {ref} from "vue";
+import { defineEmits } from "vue";
 
+defineEmits("close")
 export default {
   name: "App",
-  data() {
-    return {
-      textToShow: 'привіт',
-      isOpen: ref(false)
-    }
-  }
+  props: ['title', 'text']
 }
 </script>
-

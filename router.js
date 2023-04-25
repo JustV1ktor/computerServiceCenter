@@ -1,12 +1,15 @@
 import { createRouter, createWebHistory } from "vue-router/dist/vue-router"
-import App from "@/views/Home";
-import Login from './src/views/Login'
-import Register from './src/views/Register'
-import PriceList from './src/views/PriceList'
-import About from './src/views/About'
-import History from "@/views/History";
-import Notification from "./src/components/NotificationHandler"
-import personalOffice from "@/views/personalOffice";
+import App from "@/views/Home"
+import Login from '@/views/Login'
+import Register from '@/views/Register'
+import PriceList from '@/views/PriceList'
+import About from '@//views/About'
+import History from "@/views/History"
+import PersonalOffice from "@/views/PersonalOffice"
+import Editor from '@/views/Editor'
+import error from '@/views/PageNotFound'
+
+import Notification from "@/components/NotificationHandler"
 
 export default createRouter({
     history: createWebHistory(),
@@ -18,6 +21,8 @@ export default createRouter({
         { path: '/About', component: About},
         { path: '/History', component: History},
         { path: '/Notification', component: Notification},
-        { path: '/personalOffice', component: personalOffice}
+        { path: '/PersonalOffice', component: PersonalOffice},
+        { path: '/Editor', component: Editor},
+        { path: '/:catchAll(.*)', component: error}
     ]
 })

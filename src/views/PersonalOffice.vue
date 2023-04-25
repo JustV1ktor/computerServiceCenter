@@ -1,0 +1,215 @@
+<template>
+  <div class="office">
+    <h1>Привіт {{ login }}!</h1>
+    <div>
+      <form class="sign-up-content" v-on:submit.prevent="changeLogin">
+        <h4 class="office-label">Змінити логін</h4>
+        <input class="input-sign-up" v-model="newLogin" type="text" placeholder="Логін" required/>
+        <button class="button-content" type="submit">Змінити логін!</button>
+      </form>
+    </div>
+    <div>
+      <form class="sign-up-content" v-on:submit.prevent="changePhone">
+        <h4 class="office-label">Змінити телефон (пр. 0681234567)</h4>
+        <input class="input-sign-up" v-model="phone" type="tel" placeholder="Телефон" pattern="[0-9]{10}" required/>
+        <button class="button-content" type="submit">Змінити телефон!</button>
+      </form>
+    </div>
+    <div>
+      <form class="sign-up-content" v-on:submit.prevent="changePassword">
+        <h4 class="office-label">Змінити пароль</h4>
+        <input class="input-sign-up" v-model="newPassword" type="text" placeholder="Пароль" required/>
+        <h4 class="office-label">Підтвердити пароль</h4>
+        <input class="input-sign-up" v-model="newPasswordToCheck" type="text" placeholder="Пароль" required/>
+        <button class="button-content" type="submit">Змінити пароль!</button>
+      </form>
+    </div>
+    <button v-on:click="logOut" class="button-content">Вийти</button>
+  </div>
+
+  <div class="root">
+    <teleport to="body">
+      <div class="modal" v-if="isOpen">
+        <NotificationHandler
+            @close="isOpen = false"
+            :title="title"
+            :text="text"
+        />
+      </div>
+    </teleport>
+  </div>
+</template>
+
+<script>
+import NotificationHandler from "@/components/NotificationHandler";
+import {ref} from "vue";
+
+export default {
+  name: "App",
+  inject: ['refreshUser'],
+  components: {
+    NotificationHandler
+  },
+  data() {
+    return {
+      token: '',
+      login: '',
+      phone: '',
+      newLogin: '',
+      newPassword: '',
+      newPasswordToCheck: '',
+      isOpen: ref(false),
+      title: '',
+      text: '',
+      nextPage: false
+    }
+  },
+
+  mounted() {
+    this.updateUser()
+  },
+
+  methods: {
+    async updateUser() {
+      try {
+        this.login = await fetch('http://localhost:3000/currentUser', {
+          method: "POST",
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            authorization: localStorage.getItem('Authorization')
+          }),
+          mode: "cors"
+        }).then(res => res.json())
+      } catch (err) {
+        console.log(err)
+        this.title = "Увага!"
+        this.text = "Щось пішло не так!"
+        this.isOpen = true
+      }
+    },
+
+    async logOut() {
+      await fetch('http://localhost:3000/destroy', {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization')
+        }),
+        mode: "cors"
+      })
+      localStorage.removeItem('Authorization')
+      this.refreshUser()
+      this.$router.push('/')
+    },
+
+    async changeLogin() {
+      try {
+
+        const allUsers = await fetch('http://localhost:3000/fetchUsers').then(res => res.json())
+        let uniqueLogin = true
+
+        for (const user of allUsers) {
+          if (user['name'] === this.login) {
+            uniqueLogin = false
+          }
+        }
+
+        if (uniqueLogin === true) {
+          this.token = await fetch('http://localhost:3000/updateLogin', {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              authorization: localStorage.getItem('Authorization'),
+              newLogin: this.newLogin
+            }),
+          }).then(res => res.json())
+
+          localStorage.setItem('Authorization', this.token)
+          await this.updateUser()
+          this.newLogin = ''
+
+          this.title = "Успіх!"
+          this.text = "Ваше ім'я було змінено!"
+          this.isOpen = true
+        } else {
+          this.title = "Увага!"
+          this.text = "Такий логін вже використовується! Напишіть новий!"
+          this.isOpen = true
+        }
+      } catch (err) {
+        this.title = "Увага!"
+        this.text = "Щось пішло не так!"
+        this.isOpen = true
+      }
+    },
+
+    async changePhone() {
+      try {
+        await fetch('http://localhost:3000/updatePhone', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            authorization: localStorage.getItem('Authorization'),
+            phone: "+38" + this.phone
+          }),
+        })
+
+        this.phone = ''
+
+        this.title = "Успіх!"
+        this.text = "Ваш номер був змінений!"
+        this.isOpen = true
+      } catch (err) {
+        this.title = "Увага!"
+        this.text = "Ваш номер не був змінений!"
+        this.isOpen = true
+      }
+    },
+
+    async changePassword() {
+      if (this.newPassword === this.newPasswordToCheck) {
+        try {
+          await fetch('http://localhost:3000/updatePassword', {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              authorization: localStorage.getItem('Authorization'),
+              newPassword: this.newPassword
+            }),
+          })
+          this.title = "Успіх!"
+          this.text = "Пароль змінено успішно!"
+          this.isOpen = true
+        } catch (err) {
+          this.title = "Увага!"
+          this.text = "Щось пішло не так!"
+          this.isOpen = true
+        }
+
+        this.newPassword = ''
+        this.newPasswordToCheck = ''
+      } else {
+        this.title = "Помилка!"
+        this.text = "Паролі не співпадають! Перевірте паролі!"
+        this.isOpen = true
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+</style>

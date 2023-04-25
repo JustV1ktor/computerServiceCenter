@@ -1,25 +1,35 @@
 <template>
   <div class="item">
-    <h1>History</h1>
+    <h1>Ваша історія замовлень</h1>
     <table class="table" v-for="info in history" :key="info._id">
-      <tr class="table-head info">
-        <th>Date purchased</th>
-        <th>Price</th>
+      <thead>
+      <tr class="table-head">
+        <th>Дата купівлі</th>
+        <th>Статус</th>
+        <th>Ціна</th>
       </tr>
+      </thead>
 
       <tr class="table-tr">
         <td>
           <label>{{`${new Date(Date.parse(info.date)).toLocaleDateString()}  ${new Date(Date.parse(info.date)).toLocaleTimeString()}` }}</label>
         </td>
         <td>
+          <label :class="[info.status === 'очікування' ? 'yellow' : info.status === 'відмовлено' ? 'red' : info.status === 'прийнято' ? 'light-green' : info.status === 'виконано' ? 'green' : '']">
+            {{ info.status }}
+          </label>
+        </td>
+        <td>
           <label>{{ info.totalSum }} грн</label>
         </td>
       </tr>
 
-      <tr class="table-head">
-        <th>Service name</th>
-        <th>Description</th>
+      <thead>
+      <tr class="table-head info">
+        <th>Назва сервісу</th>
+        <th>Опис</th>
       </tr>
+      </thead>
 
       <tr class="table-tr" v-for="service in info['services']" :key="service._id">
         <td class="service-label">
@@ -31,8 +41,16 @@
       </tr>
 
     </table>
+    <div v-if="history.length === 0">
+      <div class="history-no-content">
+        <p>
+          На даний момент ви не зробили ніяку покупку. <br>
+          Зробіть якусь покупку і воно тут буде виведено!
+        </p>
+      </div>
+    </div>
     <a href="/">
-      <button class="button-content">back</button>
+      <button class="button-content">Повернутись на головну</button>
     </a>
   </div>
 </template>
@@ -45,10 +63,18 @@ export default {
       history: []
     }
   },
-  mounted() {
-    fetch('http://localhost:3000/fetchHistory')
-        .then(res => res.json())
-        .then(data => this.history = data);
+  async mounted() {
+    this.history = await fetch('http://localhost:3000/fetchCurrentUserHistory', {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        authorization: localStorage.getItem('Authorization')
+      }),
+      mode: "cors"
+    }).then(res => res.json())
   },
 }
 </script>

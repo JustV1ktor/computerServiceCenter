@@ -3,22 +3,25 @@
     <h1 class="logo">Computer Service</h1>
     <div class="header-container">
       <a href="/">
-        <button class="button-head">main page</button>
+        <button class="button-head">Головна </button>
       </a>
       <a href="/priceList">
-        <button class="button-head">price list</button>
+        <button class="button-head">Прайс лист</button>
       </a>
       <a v-if="userActive === true" href="/history">
-        <button class="button-head">history</button>
+        <button class="button-head">Історія</button>
       </a>
       <a href="/about">
-        <button class="button-head">about</button>
+        <button class="button-head">Про нас</button>
       </a>
       <a v-if="userActive === false" href="/login">
-        <button class="button-head">sign in</button>
+        <button class="button-head">Ввійти</button>
       </a>
       <a v-if="userActive === true" href="/personalOffice">
-        <button class="button-head">Office</button>
+        <button class="button-head">Кабінет</button>
+      </a>
+      <a v-if="userActive === true" href="/editor">
+        <button class="button-head">Панель керування</button>
       </a>
     </div>
   </header>
@@ -74,7 +77,6 @@
 </template>
 
 <script>
-
 export default {
   name: "App",
   data() {
@@ -88,17 +90,21 @@ export default {
     }
   },
   mounted() {
+    if(localStorage.Authorization) {
+      this.name = localStorage.Authorization;
+    }
     this.refreshUser()
   },
   methods: {
     refreshUser() {
-      fetch('http://localhost:3000/activeUser')
-          .then(res => res.json())
-          .then(data => this.userActive = data)
+      this.userActive = !!localStorage.Authorization;
     }
   }
 }
 </script>
 
 <style src="./style.css">
+</style>
+
+<style src="./font-awesome.css">
 </style>
