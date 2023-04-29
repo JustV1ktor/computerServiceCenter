@@ -10,8 +10,15 @@
       </div>
     </div>
     <div class="item foo">
-      <div class="editor-table full-element-width" v-if="page === 3">
+      <div class="editor-table full-element-width" v-if="editorPage === 3">
         <h3>Редагування існуючих сервісів</h3>
+
+        <div>
+          <button class="button-content" v-if="count > 0" @click="newServicesPage(-1)">Попередня</button>
+          <label>{{ count + 1 }}</label>
+          <button class="button-content" v-if="count < services.pageCount - 1" @click="newServicesPage(1)">Наступна</button>
+        </div>
+
         <table class="full-element-width">
           <tr class="table-head-service">
             <th>ID сервісу</th>
@@ -20,7 +27,7 @@
             <th>Опис</th>
             <th>Ціна</th>
           </tr>
-          <tr class="editor-table-tr" v-for="service in services" :key="service._id">
+          <tr class="editor-table-tr" v-for="service in services.data" :key="service._id">
             <td>
               <label>{{ service._id }}</label>
             </td>
@@ -28,7 +35,7 @@
             <textarea class="editor-field" v-model="service.name" @focusout="updateService(service._id ,'name', service.name)"/>
             </td>
             <td>
-              <select class="editor-select" @change="updateService(service._id ,'categoryID',selectedCategoryID($event))">
+              <select class="editor-select" @change="updateService(service._id,'categoryID', selectedID($event))">
                 <option v-for="category in categories" :key="category._id" :selected="service.category === category.name" v-bind:value="category._id">{{ category.name }}
                 </option>
               </select>
@@ -41,6 +48,12 @@
             </td>
           </tr>
         </table>
+
+        <div>
+          <button class="button-content" v-if="count > 0" @click="newServicesPage(-1)">Попередня</button>
+          <label>{{ count + 1 }}</label>
+          <button class="button-content" v-if="count < services.pageCount - 1" @click="newServicesPage(1)">Наступна</button>
+        </div>
 
         <h3>Створення нового сервісу</h3>
         <form v-on:submit.prevent="createService">
@@ -77,7 +90,7 @@
         </form>
       </div>
 
-      <div v-if="page === 4">
+      <div v-if="editorPage === 4">
         <h3>Редагування категорії</h3>
         <div class="sign-up-content">
           <div v-for="category of categories" :key="category._id">
@@ -94,12 +107,15 @@
         </div>
       </div>
 
-      <div class="full-element-width" v-if="page === 2">
+      <div class="full-element-width" v-if="editorPage === 2">
         <h3>Всі зареєстровані користувачі</h3>
+        <h4>Пошук</h4>
+        <textarea class="editor-field" v-model="userToFind" @input="findUser(userToFind)"></textarea>
         <table class="editor-table">
           <tr class="table-head-service">
             <th>ID користувача</th>
             <th>Логін користувача</th>
+            <th>Роль користувача</th>
             <th>Телефон користувача</th>
           </tr>
           <tr class="editor-table-tr user" v-for="user in users" :key="user._id">
@@ -110,13 +126,29 @@
               <label>{{ user.name }}</label>
             </td>
             <td>
+              <div v-if="checkAdminRole() === true">
+                <label v-for="role in roles" :key="role._id">{{ role._id === user.roleID ? role.name : null }}</label>
+              </div>
+              <select v-if="checkAdminRole() === false" class="editor-select" @change="updateRole(user._id, selectedID($event))">
+                <option v-for="role in roles" :key="role._id" :selected="role._id === user.roleID" v-bind:value="role._id">{{ role.name }}
+                </option>
+              </select>
+            </td>
+            <td>
               <label>{{ user.phone }}</label>
             </td>
           </tr>
         </table>
+
+        <div>
+          <button class="button-content">Поепердня</button>
+          <label>{{ count }}</label>
+          <button class="button-content">Наступна</button>
+        </div>
+
       </div>
 
-      <div v-if="page === 1">
+      <div v-if="editorPage === 1">
         <h3>Замовлення</h3>
 
         <select class="editor-select" @change="filteredStatus($event)">
@@ -127,7 +159,13 @@
           <option value="відмовлено">відмовлені</option>
         </select>
 
-        <table class="editor-table" v-for="history in filteredOrders" :key="history._id">
+        <div>
+          <button class="button-content" v-if="count > 0" @click="newOrdersPage(-1)">Попередня</button>
+          <label>{{ count + 1 }}</label>
+          <button class="button-content" v-if="count < allHistory.pageCount - 1" @click="newOrdersPage(1)">Наступна</button>
+        </div>
+
+        <table class="editor-table" v-for="history in allHistory.fetchedData" :key="history._id">
           <thead>
           <tr class="table-head-service whitesmoke">
             <th>ID замовлення</th>
@@ -205,6 +243,13 @@
             </td>
           </tr>
         </table>
+
+        <div>
+          <button class="button-content" v-if="count > 0" @click="newOrdersPage(-1)">Попередня</button>
+          <label>{{ count + 1 }}</label>
+          <button class="button-content" v-if="count < allHistory.pageCount - 1" @click="newOrdersPage(1)">Наступна</button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -234,14 +279,17 @@ export default {
   },
   data() {
     return {
-      activeUser: Boolean,
       serviceName: '',
       serviceDescription: '',
       servicePrice: '',
       CategoryID: '',
       services: [],
       users: [],
+      currentUser: '',
+      userToFind: '',
+      usersToShow: [],
       categories: [],
+      roles: [],
       allHistory: [],
       filter: 0,
       filteredOrders: [],
@@ -250,25 +298,82 @@ export default {
       title: '',
       text: '',
       nextPage: false,
-      page: 1
+      editorPage: 1,
+      count: 0,
+      selectedCategory: 0
     }
   },
   mounted() {
-    fetch('http://localhost:3000/fetchData')
-        .then(res => res.json())
-        .then(data => this.services = data)
+    fetch('http://localhost:3000/getUserRole' , {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authorization: localStorage.getItem('Authorization')
+      })
+    }).then(res => res.json()).then(data => data === true ? '' : this.$router.push('/ '))
+
+    fetch('http://localhost:3000/currentUser', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authorization: localStorage.getItem('Authorization')
+      })
+    }).then(res => res.json()).then(data => this.currentUser = data)
+
+    fetch('http://localhost:3000/fetchData', {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        page: 0,
+        fetchCategoryID: 0
+      })
+    }).then(res => res.json()).then(data => this.services = data)
+
     fetch('http://localhost:3000/fetchCategories')
         .then(res => res.json())
         .then(data => this.categories = data)
-    fetch('http://localhost:3000/fetchUsers')
-        .then(res => res.json())
-        .then(data => this.users = data)
-    fetch('http://localhost:3000/fetchHistory')
-        .then(res => res.json())
-        .then(data => this.filteredOrders = this.allHistory = data)
+
+    fetch('http://localhost:3000/fetchUsers', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authorization: localStorage.getItem('Authorization')
+      })
+    }).then(res => res.json()).then(data => this.users = data)
+
+    fetch('http://localhost:3000/fetchRoles', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authorization: localStorage.getItem('Authorization')
+      })
+    }).then(res => res.json()).then(data => this.roles = data)
+
+    fetch('http://localhost:3000/fetchHistory', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authorization: localStorage.getItem('Authorization'),
+        page: 0,
+        fetchStatus: 0
+      })
+    }).then(res => res.json()).then(data => this.allHistory = data)
   },
   methods: {
-    selectedCategoryID(event) {
+    selectedID(event) {
       return event.target.value
     },
 
@@ -276,27 +381,76 @@ export default {
       this.CategoryID = event.target.value
     },
 
-    async fetchAllHistory() {
-      this.filteredOrders = this.allHistory = await fetch('http://localhost:3000/fetchHistory').then(res => res.json())
+    findUser(userName) {
+      for (const user of this.users) {
+        this.usersToShow.push(user['name'].includes(userName))
+      }
     },
 
-    async fetchFilteredHistory() {
-      let orders = this.allHistory = await fetch('http://localhost:3000/fetchHistory').then(res => res.json())
-      let data = []
-
-      if (this.filter !== 0) {
-        for (const order of orders) {
-          if (this.filter === order['status']) {
-            data.push(order)
-            console.log(data)
+    checkAdminRole() {
+      for (const user of this.users) {
+        for (const role of this.roles) {
+          if (user['name'] === this.currentUser) {
+            if (role['_id'] === user['roleID']) {
+              if (role['name'] === 'адмін') {
+                return true
+              } else {
+                return false
+              }
+            }
           }
         }
-        this.filteredOrders = data
-        console.log(this.filteredOrders)
-      } else {
-        console.log(1)
-        this.filteredOrders = orders
       }
+    },
+
+    async fetchAllHistory() {
+      this.allHistory = await fetch('http://localhost:3000/fetchHistory', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization'),
+          page: 0,
+          fetchStatus: 0
+        })
+      }).then(res => res.json())
+    },
+
+    async filteredStatus(event) {
+
+      this.filter = event.target.value
+
+      console.log(this.filter)
+
+      this.allHistory = await fetch('http://localhost:3000/fetchHistory', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization'),
+          page: 0,
+          fetchStatus: this.filter
+        })
+      }).then(res => res.json())
+    },
+
+    async newOrdersPage(value) {
+
+      this.count = this.count + value
+
+      this.allHistory = await fetch('http://localhost:3000/fetchHistory', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization'),
+          page: this.count,
+          fetchStatus: this.filter
+        })
+      }).then(res => res.json())
     },
 
     async createService() {
@@ -314,7 +468,17 @@ export default {
             categoryID: this.CategoryID
           }),
         })
-        this.services = await fetch('http://localhost:3000/fetchData').then(res => res.json())
+        this.services = await fetch('http://localhost:3000/fetchData', {
+          method: "POST",
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            page: 0,
+            fetchCategoryID: 0
+          })
+        }).then(res => res.json())
 
         this.title = "Успіх!"
         this.text = "Новий сервіс створено успішно!"
@@ -380,8 +544,24 @@ export default {
       this.categories = await fetch('http://localhost:3000/fetchCategories').then(res => res.json())
     },
 
+    async newServicesPage(page) {
+      this.count = this.count + page
+
+      this.services = await fetch('http://localhost:3000/fetchData', {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          page: this.count,
+          fetchCategoryID: this.selectedCategory
+        })
+      }).then(res => res.json())
+    },
+
     changePage(value) {
-      this.page = value
+      this.editorPage = value
     },
 
     async updateStatus(historyID, value) {
@@ -398,33 +578,28 @@ export default {
 
       await this.fetchFilteredHistory()
     },
+    async updateRole(userID, roleID) {
+      await fetch('http://localhost:3000/updateRole', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization'),
+          userID,
+          roleID
+        }),
+      })
 
-    filteredStatus(event) {
-
-      let data = []
-
-      if(Number(event.target.value) === 0) {
-        this.filter = 0
-        this.filteredOrders = this.allHistory
-      } else {
-        this.filter = event.target.value
-        for (const order of this.allHistory) {
-          if (order['status'] === event.target.value)  {
-            data.push({
-              _id: order['_id'],
-              date: order['date'],
-              userName: order['userName'],
-              userPhone: order['userPhone'],
-              status: order['status'],
-              totalSum: order['totalSum'],
-              services: order['services'],
-            })
-          }
-        }
-
-        this.filteredOrders = data
-
-      }
+      this.users = await fetch('http://localhost:3000/fetchUsers', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization')
+        })
+      }).then(res => res.json())
     }
   }
 }

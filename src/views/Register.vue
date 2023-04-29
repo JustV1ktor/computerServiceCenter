@@ -36,7 +36,7 @@
 </template>
 <script>
 import NotificationHandler from "@/components/NotificationHandler";
-
+import {REGULAR_EXPRESSIONS} from "@/constant/regularExpression";
 import {ref} from "vue";
 
 export default {
@@ -59,53 +59,53 @@ export default {
   methods: {
     async sendPost() {
       try {
-        const allUsers = await fetch('http://localhost:3000/fetchUsers').then(res => res.json())
-        let uniqueLogin = true
-
-        for (const user of allUsers) {
-          if (user['name'] === this.login) {
-            uniqueLogin = false
-          }
-        }
+        const uniqueLogin = await fetch('http://localhost:3000/checkName', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            login: this.login
+          })
+        }).then(res => res.json())
 
         if (uniqueLogin === true) {
 
-          if (this.phone.length === 10) {
+            let userPhone = "+38" + this.phone
 
-            this.phone = "+38" + this.phone
+              if (this.password === this.passwordToCheck) {
 
-            if (this.password === this.passwordToCheck) {
+                if(this.password.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(this.password)) {
 
-              await fetch('http://localhost:3000/register', {
-                method: "POST",
-                headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  login: this.login,
-                  phone: this.phone,
-                  password: this.password
-                }),
-                mode: "cors"
-              })
+                  await fetch('http://localhost:3000/register', {
+                    method: "POST",
+                    headers: {
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      login: this.login,
+                      phone: userPhone,
+                      password: this.password
+                    })
+                  })
 
-              this.title = "Успіх!"
-              this.text = "Ви зареєструвались!"
-              this.nextPage = true
-              this.isOpen = true
+                  this.title = "Успіх!"
+                  this.text = "Ви зареєструвались!"
+                  this.nextPage = true
+                  this.isOpen = true
+
+                } else {
+                  this.title = "Увага!"
+                  this.text = "Пароль має містити довжину не менше 8 символів! І мати хоча б 1 малу, велику букви і мати 1 спец символ приклад *?!+=-_"
+                  this.isOpen = true
+                }
 
             } else {
               this.title = "Увага!"
               this.text = "Паролі не співпадають! Перевірте паролі!"
               this.isOpen = true
             }
-
-          } else {
-            this.title = "Увага!"
-            this.text = "Номер телефона не праивльний! Перевірте телефон!"
-            this.isOpen = true
-          }
 
         } else {
           this.title = "Увага!"
@@ -114,11 +114,6 @@ export default {
         }
 
       } catch (err) {
-        if (err === 403) {
-          this.title = "Увага!"
-          this.text = "Ви не зареєструвались! Щось пішло не так"
-          this.isOpen = true
-        }
         this.title = "Увага!"
         this.text = "Ви не зареєструвались! Щось пішло не так"
         this.isOpen = true

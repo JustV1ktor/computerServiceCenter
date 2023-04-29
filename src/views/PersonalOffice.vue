@@ -42,11 +42,12 @@
 
 <script>
 import NotificationHandler from "@/components/NotificationHandler";
+import {REGULAR_EXPRESSIONS} from "@/constant/regularExpression";
 import {ref} from "vue";
 
 export default {
   name: "App",
-  inject: ['refreshUser'],
+  inject: ['refreshUser', 'refreshRole'],
   components: {
     NotificationHandler
   },
@@ -104,21 +105,23 @@ export default {
         mode: "cors"
       })
       localStorage.removeItem('Authorization')
+      localStorage.removeItem('Admin')
       this.refreshUser()
+      this.refreshRole()
       this.$router.push('/')
     },
 
     async changeLogin() {
       try {
-
-        const allUsers = await fetch('http://localhost:3000/fetchUsers').then(res => res.json())
-        let uniqueLogin = true
-
-        for (const user of allUsers) {
-          if (user['name'] === this.login) {
-            uniqueLogin = false
-          }
-        }
+        const uniqueLogin = await fetch('http://localhost:3000/checkName', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            login: this.newLogin
+          })
+        }).then(res => res.json())
 
         if (uniqueLogin === true) {
           this.token = await fetch('http://localhost:3000/updateLogin', {
@@ -177,32 +180,44 @@ export default {
     },
 
     async changePassword() {
-      if (this.newPassword === this.newPasswordToCheck) {
-        try {
-          await fetch('http://localhost:3000/updatePassword', {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              authorization: localStorage.getItem('Authorization'),
-              newPassword: this.newPassword
-            }),
-          })
-          this.title = "Успіх!"
-          this.text = "Пароль змінено успішно!"
-          this.isOpen = true
-        } catch (err) {
-          this.title = "Увага!"
-          this.text = "Щось пішло не так!"
+      try {
+
+        if (this.newPassword === this.newPasswordToCheck) {
+
+          if (this.newPassword.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(this.newPassword)) {
+
+            await fetch('http://localhost:3000/updatePassword', {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                authorization: localStorage.getItem('Authorization'),
+                newPassword: this.newPassword
+              }),
+            })
+            this.newPassword = ''
+            this.newPasswordToCheck = ''
+
+            this.title = "Успіх!"
+            this.text = "Пароль змінено успішно!"
+            this.isOpen = true
+
+          } else {
+            this.title = "Увага!"
+            this.text = "Пароль має містити довжину не менше 8 символів! І мати хоча б 1 малу, велику букви і мати 1 спец символ приклад *?!+=-_"
+            this.isOpen = true
+          }
+
+        } else {
+          this.title = "Помилка!"
+          this.text = "Паролі не співпадають! Перевірте паролі!"
           this.isOpen = true
         }
 
-        this.newPassword = ''
-        this.newPasswordToCheck = ''
-      } else {
-        this.title = "Помилка!"
-        this.text = "Паролі не співпадають! Перевірте паролі!"
+      } catch (err) {
+        this.title = "Увага!"
+        this.text = "Щось пішло не так!"
         this.isOpen = true
       }
     }

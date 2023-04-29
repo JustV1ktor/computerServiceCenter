@@ -40,12 +40,12 @@ export default {
   components: {
     NotificationHandler
   },
-  inject: ['refreshUser'],
+  inject: ['refreshUser', 'getUserRole', 'refreshRole'],
   data() {
     return {
       login: '',
       password: '',
-      token: '',
+      response: '',
       isOpen: ref(false),
       title: '',
       text: '',
@@ -55,7 +55,7 @@ export default {
   methods: {
     async sendPost() {
       try {
-        this.token = await fetch('http://localhost:3000/login', {
+        this.response = await fetch('http://localhost:3000/login', {
           method: "POST",
           headers: {
             'Accept': 'application/json',
@@ -68,9 +68,13 @@ export default {
           mode: "cors"
         }).then(res => res.json())
 
-        localStorage.setItem('Authorization', this.token)
+        localStorage.setItem('Authorization', this.response.accessToken)
 
         this.refreshUser()
+
+        localStorage.setItem('Admin', this.response.value)
+
+        this.refreshRole()
         this.title = "Успіх!"
         this.text = "Ви ввійшли!"
         this.nextPage = true
@@ -82,6 +86,7 @@ export default {
         console.log(err)
       }
     },
+
     next() {
       if (this.nextPage) {
         this.$router.push('/')

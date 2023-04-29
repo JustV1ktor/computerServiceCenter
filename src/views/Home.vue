@@ -28,33 +28,32 @@
   </div>
 
   <div class="full-width">
-    <div class="item" >
+    <div class="item">
       <div class="content-row">
-        <label class="content">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer laoreet orci non arcu
-          scelerisque, at fringilla risus fermentum. Vestibulum et nisl tempus, tempor risus rutrum, sollicitudin metus.
-          Vivamus sagittis eros magna, eu gravida sem faucibus quis. Proin condimentum aliquet nisl, eget tempor ex.
-          Vivamus sit amet felis varius, porta lorem vitae, posuere ex. Morbi in lacinia sapien. Mauris finibus porta
-          ante vel sodales.
-          Pellentesque pretium, felis vel iac</label>
+        <label class="content">
+          Наш пріоритет — зробити все можливе, щоб ваш електронний помічник завжди був у робочому стані та ніколи не
+          виходив з ладу, особливо в ті моменти, коли він найбільше потрібний для виконання ваших завдань.
+          <br><br>Ми розуміємо, як важливо мати доступ до пристроїв у будь-який час, тому ми пропонуємо швидку та якісну технічну підтримку в разі виникнення будь-яких проблем.
+        </label>
         <img src="../public/5e5c899db263d713b24720a6cc1a71fa.jpg"/>
       </div>
       <div class="content-row">
         <img src="../public/My-project-2.png">
-        <label class="content">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer laoreet orci non arcu
-          scelerisque, at fringilla risus fermentum. Vestibulum et nisl tempus, tempor risus rutrum, sollicitudin metus.
-          Vivamus sagittis eros magna, eu gravida sem faucibus quis. Proin condimentum aliquet nisl, eget tempor ex.
-          Vivamus sit amet felis varius, porta lorem vitae, posuere ex. Morbi in lacinia sapien. Mauris finibus porta
-          ante vel sodales.
-          Pellentesque pretium, felis vel iac</label>
-        <!--  <iframe width="800" height="640" src="https://www.youtube.com/embed/UeCdBVHYa_8" title="I Made a Bad Decision – Framework Investment Update" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>-->
+        <div class="content">
+          <label>Наш сервісний центр надає широкий спектр послуг таких як:</label>
+          <ul>
+            <li>Ремонт будь-якої техніки починаючи від телефонів, плашетів і закінчуючи побутовою технікою</li>
+            <li>Обслуговування техніки як принтерів, заміна термопасти, відновлення дисків</li>
+            <li>Консультація з нашими операторами по телефону в любий зручний для вас час</li>
+          </ul>
+        </div>
       </div>
       <div class="content-row">
-        <label class="content">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer laoreet orci non arcu
-          scelerisque, at fringilla risus fermentum. Vestibulum et nisl tempus, tempor risus rutrum, sollicitudin metus.
-          Vivamus sagittis eros magna, eu gravida sem faucibus quis. Proin condimentum aliquet nisl, eget tempor ex.
-          Vivamus sit amet felis varius, porta lorem vitae, posuere ex. Morbi in lacinia sapien. Mauris finibus porta
-          ante vel sodales.
-          Pellentesque pretium, felis vel iac</label>
+        <label class="content">
+          Оскільки ми є одним з провідних постачальників запчастин для техніки, ми використовуємо високоякісні оригінальні запчастини, які привозимо з Європи.
+          <br><br>Ми надаємо гарантію на ремонт та обслуговування цифрової, офісної та оргтехніки тривалістю 3, 6 або 12 місяців.
+          <br><br>Наші майстри в найкоротші терміни виконають роботи будь якої складності.
+        </label>
         <img src="../public/Social-9.jpg"/>
       </div>
     </div>

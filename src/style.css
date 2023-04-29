@@ -120,6 +120,7 @@ td {
 
 .main-content {
     text-align: center;
+    flex: 1;
 }
 
 .full-width {
@@ -501,6 +502,7 @@ textarea {
 .item-editor {
     display: flex;
     flex-direction: row;
+    height: 100%;
 }
 
 .item.foo {
@@ -555,6 +557,12 @@ textarea {
 .service-buttons {
     display: flex;
     justify-content: flex-end;
+}
+
+.right-side{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .red {

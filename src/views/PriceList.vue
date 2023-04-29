@@ -5,6 +5,13 @@
     <select class="editor-select" @change="fetchFilteredServices($event)">
       <option v-for="category in categories" :key="category._id" v-bind:value="category._id">{{ category.name }}</option>
     </select>
+
+    <div>
+      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+      <label>{{ count + 1 }}</label>
+      <button class="button-content" v-if="count < services.pageCount - 1" @click="newPage(1)">Наступна</button>
+    </div>
+
     <table class="table">
       <thead>
       <tr class="table-head">
@@ -14,7 +21,7 @@
         <th>Ціна</th>
       </tr>
       </thead>
-      <tr class="table-tr" v-for="service in filteredServices" :key="service._id">
+      <tr class="table-tr" v-for="service in services.data" :key="service._id">
         <td class="service-label">
           <label>{{ service.name }}</label>
         </td>
@@ -32,7 +39,7 @@
         </td>
       </tr>
     </table>
-    <div class="cart-outer" :class="[cart.length >= 1 ? 'show' : '', style.red]">
+    <div class="cart-outer" :class="[cart.length >= 1 ? 'show' : '']">
       <div class="cart-inner">
         <h4>Кошик:</h4>
         <div class="cart-item" v-for="item in cart" :key="item._id">
@@ -42,6 +49,13 @@
         <h1>{{ totalSum }} грн</h1>
       </div>
     </div>
+
+    <div>
+      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+      <label>{{ count + 1 }}</label>
+      <button class="button-content" v-if="count < services.pageCount - 1" @click="newPage(1)">Наступна</button>
+    </div>
+
     <div class="button-row">
       <form v-if="activeUser === true" v-on:submit.prevent="sendPostConfirmService(totalSum)">
         <button class="button-content" type="submit">Замовити!</button>
@@ -80,14 +94,14 @@ export default {
     return {
       activeUser: Boolean,
       services: [],
-      filteredServices: [],
-      selectedCategory: '',
+      selectedCategory: 0,
       categories: [],
       checkedIDs: [],
       cartData: [],
       isOpen: ref(false),
       title: '',
-      text: ''
+      text: '',
+      count: 0
     }
   },
   computed: {
@@ -117,9 +131,18 @@ export default {
     },
   },
   mounted() {
-    fetch('http://localhost:3000/fetchData')
-        .then(res => res.json())
-        .then(data => this.filteredServices = this.services = data)
+    fetch('http://localhost:3000/fetchData', {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        page: 0,
+        fetchCategoryID: 0
+      })
+    }).then(res => res.json()).then(data => this.services = data)
+
     fetch('http://localhost:3000/fetchCategories')
         .then(res => res.json())
         .then(data => {
@@ -129,27 +152,36 @@ export default {
   },
   methods: {
 
-    fetchFilteredServices(event) {
+    async fetchFilteredServices(event) {
+      this.selectedCategory = event.target.value
+      this.count = 0
 
-      let data = []
+      this.services = await fetch('http://localhost:3000/fetchData', {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fetchCategoryID: event.target.value
+        })
+      }).then(res => res.json())
+    },
 
-      if(Number(event.target.value) === 0) {
-        this.filteredServices = this.services
-      } else {
-        for (const service of this.services) {
-          if (service['categoryID'] === event.target.value)  {
-            data.push({
-              _id: service['_id'],
-              name: service['name'],
-              description: service['description'],
-              categoryID: service['categoryID'],
-              category: service['category'],
-              price: service['price']
-            })
-          }
-        }
-        this.filteredServices = data
-      }
+    async newPage(page) {
+      this.count = this.count + page
+
+      this.services = await fetch('http://localhost:3000/fetchData', {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          page: this.count,
+          fetchCategoryID: this.selectedCategory
+        })
+      }).then(res => res.json())
     },
 
     fetchUser() {
@@ -252,10 +284,6 @@ export default {
 }
 </script>
 
-<style module="style">
-
-/*.red {*/
-/*  background-color: red;*/
-/*}*/
+<style>
 
 </style>

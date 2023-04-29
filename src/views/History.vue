@@ -1,7 +1,14 @@
 <template>
   <div class="item">
     <h1>Ваша історія замовлень</h1>
-    <table class="table" v-for="info in history" :key="info._id">
+
+    <div>
+      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+      <label>{{ count + 1 }}</label>
+      <button class="button-content" v-if="count < history.pageCount - 1" @click="newPage(1)">Наступна</button>
+    </div>
+
+    <table class="table" v-for="info in history.data" :key="info._id">
       <thead>
       <tr class="table-head">
         <th>Дата купівлі</th>
@@ -9,7 +16,6 @@
         <th>Ціна</th>
       </tr>
       </thead>
-
       <tr class="table-tr">
         <td>
           <label>{{`${new Date(Date.parse(info.date)).toLocaleDateString()}  ${new Date(Date.parse(info.date)).toLocaleTimeString()}` }}</label>
@@ -49,6 +55,13 @@
         </p>
       </div>
     </div>
+
+    <div>
+      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+      <label>{{ count + 1 }}</label>
+      <button class="button-content" v-if="count < history.pageCount - 1" @click="newPage(1)">Наступна</button>
+    </div>
+
     <a href="/">
       <button class="button-content">Повернутись на головну</button>
     </a>
@@ -60,7 +73,8 @@ export default {
   name: "App",
   data() {
     return {
-      history: []
+      history: [],
+      count: 0
     }
   },
   async mounted() {
@@ -71,11 +85,28 @@ export default {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        authorization: localStorage.getItem('Authorization')
+        authorization: localStorage.getItem('Authorization'),
+        page: 0
       }),
       mode: "cors"
     }).then(res => res.json())
   },
+  methods: {
+    async newPage(page) {
+      this.count = this.count + page
+      this.history = await fetch('http://localhost:3000/fetchCurrentUserHistory', {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          authorization: localStorage.getItem('Authorization'),
+          page: this.count
+        })
+      }).then(res => res.json())
+    }
+  }
 }
 </script>
 

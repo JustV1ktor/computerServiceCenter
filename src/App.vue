@@ -20,7 +20,7 @@
       <a v-if="userActive === true" href="/personalOffice">
         <button class="button-head">Кабінет</button>
       </a>
-      <a v-if="userActive === true" href="/editor">
+      <a v-if="isAdmin === true" href="/editor">
         <button class="button-head">Панель керування</button>
       </a>
     </div>
@@ -34,9 +34,7 @@
       <div class="footer-container">
         <div>
           <p class="footer-content">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer laoreet orci non arcu scelerisque, at
-            fringilla risus fermentum. Vestibulum et nisl tempus, tempor risus rutrum, sollicitudin metus. Vivamus
-            sagittis eros magna, eu gravida sem faucibus quis. Proin condimentum aliquet nisl, eget tempor ex.
+            Комп'ютерний сервіс - є авторизованим сервісом по ремонту комп’ютерної техніки по всій Україні! Наші кваліфіковані спеціалісти здійснюють різноманітний спектр послуг.
           </p>
           <p>
             всі права захищені
@@ -82,23 +80,26 @@ export default {
   data() {
     return {
       userActive: Boolean,
+      isAdmin: Boolean
     }
   },
   provide() {
     return {
-      refreshUser: this.refreshUser
+      refreshUser: this.refreshUser,
+      refreshRole: this.refreshRole
     }
   },
   mounted() {
-    if(localStorage.Authorization) {
-      this.name = localStorage.Authorization;
-    }
     this.refreshUser()
+    this.refreshRole()
   },
   methods: {
     refreshUser() {
       this.userActive = !!localStorage.Authorization;
-    }
+    },
+    refreshRole() {
+      this.isAdmin = localStorage.getItem('Admin') === 'true';
+    },
   }
 }
 </script>
