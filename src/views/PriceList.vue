@@ -7,9 +7,11 @@
     </select>
 
     <div>
-      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
-      <label>{{ count + 1 }}</label>
-      <button class="button-content" v-if="count < services.pageCount - 1" @click="newPage(1)">Наступна</button>
+      <label>Сторінка {{ count + 1 }} з {{ services.pageCount }}</label>
+      <div>
+        <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+        <button class="button-content" v-if="count < services.pageCount - 1" @click="newPage(1)">Наступна</button>
+      </div>
     </div>
 
     <table class="table">
@@ -51,13 +53,15 @@
     </div>
 
     <div>
-      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
-      <label>{{ count + 1 }}</label>
-      <button class="button-content" v-if="count < services.pageCount - 1" @click="newPage(1)">Наступна</button>
+      <label>Сторінка {{ count + 1 }} з {{ services.pageCount }}</label>
+      <div>
+        <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+        <button class="button-content" v-if="count < services.pageCount - 1" @click="newPage(1)">Наступна</button>
+      </div>
     </div>
 
-    <div class="button-row">
-      <form v-if="activeUser === true" v-on:submit.prevent="sendPostConfirmService(totalSum)">
+    <div class="button-row" v-if="activeUser === true">
+      <form v-on:submit.prevent="sendPostConfirmService(totalSum)">
         <button class="button-content" type="submit">Замовити!</button>
       </form>
     </div>
@@ -94,6 +98,7 @@ export default {
     return {
       activeUser: Boolean,
       services: [],
+      allServices: [],
       selectedCategory: 0,
       categories: [],
       checkedIDs: [],
@@ -109,7 +114,7 @@ export default {
     totalSum() {
       let sum = 0
       for (const serviceID of this.checkedIDs) {
-        for (const service of this.services) {
+        for (const service of this.allServices) {
           if (service._id === serviceID) {
             sum = sum + Number(service.price)
           }
@@ -121,7 +126,7 @@ export default {
     cart() {
       let cartData = []
       for (const serviceID of this.checkedIDs) {
-        for (const service of this.services) {
+        for (const service of this.allServices) {
           if (service._id === serviceID) {
             cartData.push(service.name)
           }
@@ -130,7 +135,11 @@ export default {
       return cartData
     },
   },
-  mounted() {
+  beforeMount() {
+    fetch('http://localhost:3000/fetchAllData')
+        .then(res => res.json())
+        .then(data => this.allServices = data)
+
     fetch('http://localhost:3000/fetchData', {
       method: "POST",
       headers: {

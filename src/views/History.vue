@@ -1,11 +1,13 @@
 <template>
-  <div class="item">
+  <div class="item" v-if="history">
     <h1>Ваша історія замовлень</h1>
 
-    <div>
-      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
-      <label>{{ count + 1 }}</label>
-      <button class="button-content" v-if="count < history.pageCount - 1" @click="newPage(1)">Наступна</button>
+    <div v-if="history.data.length > 0">
+      <label>Сторінка {{ count + 1 }} з {{ history.pageCount }}</label>
+      <div>
+        <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+        <button class="button-content" v-if="count < history.pageCount - 1" @click="newPage(1)">Наступна</button>
+      </div>
     </div>
 
     <table class="table" v-for="info in history.data" :key="info._id">
@@ -47,7 +49,7 @@
       </tr>
 
     </table>
-    <div v-if="history.length === 0">
+    <div v-if="history.data.length === 0">
       <div class="history-no-content">
         <p>
           На даний момент ви не зробили ніяку покупку. <br>
@@ -56,11 +58,14 @@
       </div>
     </div>
 
-    <div>
-      <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
-      <label>{{ count + 1 }}</label>
-      <button class="button-content" v-if="count < history.pageCount - 1" @click="newPage(1)">Наступна</button>
+    <div v-if="history.data.length > 0">
+      <label>Сторінка {{ count + 1 }} з {{ history.pageCount }}</label>
+      <div>
+        <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
+        <button class="button-content" v-if="count < history.pageCount - 1" @click="newPage(1)">Наступна</button>
+      </div>
     </div>
+
 
     <a href="/">
       <button class="button-content">Повернутись на головну</button>
@@ -71,13 +76,16 @@
 <script>
 export default {
   name: "App",
+  inject: ['checkUser'],
   data() {
     return {
-      history: [],
+      history: null,
       count: 0
     }
   },
-  async mounted() {
+  async beforeMount() {
+    this.checkActiveUser()
+
     this.history = await fetch('http://localhost:3000/fetchCurrentUserHistory', {
       method: "POST",
       headers: {
@@ -92,6 +100,13 @@ export default {
     }).then(res => res.json())
   },
   methods: {
+
+    checkActiveUser() {
+      if (this.checkUser() === false) {
+        this.$router.push('/ ')
+      }
+    },
+
     async newPage(page) {
       this.count = this.count + page
       this.history = await fetch('http://localhost:3000/fetchCurrentUserHistory', {

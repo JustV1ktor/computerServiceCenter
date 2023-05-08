@@ -58,8 +58,10 @@ app.post('/register', async (req, res) => {
             body: {password, phone, login}
         } = req;
 
+        const userRole = await roles.findOne({name: "користувач"})
+
         if (password.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(password)) {
-            await users.create({name: login, phone: phone, password: password, token: ''})
+            await users.create({name: login, roleID: userRole._id, phone: phone, password: password, token: ''})
             return res.end()
         } else {
             res.sendStatus(403)
@@ -87,7 +89,7 @@ app.post('/login', async (req, res) => {
             const allRoles = await roles.find()
             for (const role of allRoles) {
                 if(currentUser['roleID'].equals(role['_id'])) {
-                    if(role['name'] === 'супер адмін' || role['name'] === 'адмін') {
+                    if(role['name'] === 'супер адміністратор' || role['name'] === 'адміністратор') {
                         value = 'true'
                     } else {
                         value = 'false'
@@ -170,14 +172,6 @@ app.post('/updateLogin', authenticateToken, async (req, res) => {
         }
     } = req;
 
-    const allUsers = await users.find()
-
-    for (const user of allUsers) {
-        if (user['name'] === newLogin) {
-            return res.sendStatus(400)
-        }
-    }
-
     const accessToken = jwt.sign({name: newLogin}, MAIN_TOKEN.TOKEN)
     await users.findOneAndUpdate({name: user}, {name: newLogin, token: accessToken})
     res.end(JSON.stringify(accessToken))
@@ -217,6 +211,31 @@ app.post('/updatePassword', authenticateToken, async (req, res) => {
 })
 
 app.post('/fetchUsers', authenticateToken, async (req, res) => {
+
+    const {
+        body: {
+            page,
+        }
+    } = req;
+
+    let count
+    let pageCount
+
+    count = Math.ceil(await users.countDocuments().exec() / 10)
+
+    if (page <= 0) {
+        pageCount = 0
+    } else if (page >= count) {
+        pageCount = count
+    } else {
+        pageCount = page
+    }
+
+    let data = await users.find().skip(pageCount * 10).limit(10)
+    res.end(JSON.stringify({data: data, pageCount: count}))
+})
+
+app.post('/fetchAllUsers', authenticateToken, async (req, res) => {
     res.end(JSON.stringify(await users.find()))
 })
 
@@ -234,13 +253,29 @@ app.post('/checkName', async (req, res) => {
     }
 })
 
+app.post('/checkPhone', async (req, res) => {
+    const {
+        body: {
+            phone
+        }
+    } = req;
+
+    if(await users.findOne({phone: phone}) === null) {
+        res.end(JSON.stringify(true))
+    } else {
+        res.end(JSON.stringify(false))
+    }
+})
+
 app.post('/currentUser', authenticateToken, async (req, res) => {
 
     const {
         user
     } = req;
 
-    res.end(JSON.stringify(user))
+    const currentUser = await users.findOne({name: user})
+
+    res.end(JSON.stringify(currentUser))
 })
 
 app.post('/destroy', authenticateToken, async (req, res) => {
@@ -264,70 +299,72 @@ app.post('/fetchData', async (req, res) => {
 
     let data = []
     let count = 0
+    let filter
     let pageCount
 
+    if (Number(fetchCategoryID) === 0) {
+        filter = {}
+    } else {
+        filter = {categoryID: fetchCategoryID}
+    }
+
     try {
-        if(Number(fetchCategoryID) === 0) {
 
-            count = Math.ceil(await services.countDocuments().exec() / 10)
+        count = Math.ceil(await services.countDocuments(filter).exec() / 10)
 
-            if(page <= 0) {
-                pageCount = 0
-            }else if(page >= count) {
-                pageCount = count
-            } else {
-                pageCount = page
-            }
+        if (page <= 0) {
+            pageCount = 0
+        } else if (page >= count) {
+            pageCount = count
+        } else {
+            pageCount = page
+        }
 
-            const servicesData = await services.find().skip(pageCount * 10).limit(10)
-            const categoriesData = await categories.find()
+        const servicesData = await services.find(filter).skip(pageCount * 10).limit(10)
+        const categoriesData = await categories.find()
 
-            for (const service of servicesData) {
-                for (const category of categoriesData) {
-                    if (service["categoryID"].equals(category["_id"])) {
-                        data.push({
-                            _id: service['_id'],
-                            name: service['name'],
-                            description: service['description'],
-                            price: service['price'],
-                            category: category['name'],
-                            categoryID: service['categoryID']
-                        })
-                    }
+        for (const service of servicesData) {
+            for (const category of categoriesData) {
+                if (service["categoryID"].equals(category["_id"])) {
+                    data.push({
+                        _id: service['_id'],
+                        name: service['name'],
+                        description: service['description'],
+                        price: service['price'],
+                        category: category['name'],
+                        categoryID: service['categoryID']
+                    })
                 }
             }
-
-        } else {
-
-            count = Math.ceil(await services.countDocuments({categoryID: fetchCategoryID}).exec() / 10)
-
-            if(page <= 0) {
-                pageCount = 0
-            }else if(page >= count) {
-                pageCount = count
-            } else {
-                pageCount = page
-            }
-
-            const servicesData = await services.find({categoryID: fetchCategoryID}).skip(pageCount * 10).limit(10)
-            const categoriesData = await categories.find({_id: fetchCategoryID})
-
-            for (const service of servicesData) {
-                data.push({
-                    _id: service['_id'],
-                    name: service['name'],
-                    description: service['description'],
-                    price: service['price'],
-                    category: categoriesData[0].name,
-                    categoryID: service['categoryID']
-                })
-            }
-
         }
         res.end(JSON.stringify({data: data, pageCount: count}))
     } catch (err) {
         console.log(err)
     }
+})
+
+app.get('/fetchAllData', async (req, res) => {
+    const servicesData = await services.find()
+    const categoriesData = await categories.find()
+
+    const data = []
+
+    for (const service of servicesData) {
+        for (const category of categoriesData) {
+            if (service['categoryID'].equals(category['_id'])) {
+                data.push({
+                    _id: service['_id'],
+                    name: service['name'],
+                    description: service['description'],
+                    price: service['price'],
+                    category: category['name'],
+                    categoryID: service['categoryID']
+                })
+            }
+        }
+    }
+
+    res.end(JSON.stringify(data))
 })
 
 app.get('/fetchCategories', async (req, res) => {
@@ -361,7 +398,7 @@ app.post('/updateService', authenticateToken,async (req, res) => {
     res.end()
 })
 
-app.post('/updateStatus',async (req, res) => {
+app.post('/updateStatus', authenticateToken,async (req, res) => {
 
     const {
         body: {
@@ -386,7 +423,7 @@ app.post('/createService', authenticateToken, async (req, res) => {
     } = req;
 
 
-    console.log(await services.create({name: name, categoryID: categoryID, description: description, price: price}))
+    await services.create({name: name, categoryID: categoryID, description: description, price: price})
     res.end()
 })
 
@@ -455,8 +492,6 @@ app.post('/fetchHistory', authenticateToken, async (req, res) => {
         }
     } = req;
 
-    console.log(fetchStatus)
-
     let filter
     let pageCount
     let data = []
@@ -468,7 +503,7 @@ app.post('/fetchHistory', authenticateToken, async (req, res) => {
     const servicesData = await services.find()
     const usersData = await users.find()
 
-    if (fetchStatus === 0) {
+    if (Number(fetchStatus) === 0) {
         filter = {}
     } else {
         filter = {status: fetchStatus}
@@ -476,7 +511,6 @@ app.post('/fetchHistory', authenticateToken, async (req, res) => {
 
     let count = Math.ceil(await history.countDocuments(filter).exec() / 10)
 
-    console.log("count" + count)
     if (page <= 0) {
         pageCount = 0
     } else if (page >= count) {
@@ -553,7 +587,7 @@ app.post('/getUserRole', authenticateToken, async (req, res) => {
     const allRoles = await roles.find()
     for (const role of allRoles) {
         if(currentUser['roleID'].equals(role['_id'])) {
-            if(role['name'] === 'супер адмін' || role['name'] === 'адмін') {
+            if(role['name'] === 'супер адміністратор' || role['name'] === 'адміністратор') {
                 res.end(JSON.stringify(true))
             } else {
                 res.end(JSON.stringify(false))

@@ -1,6 +1,6 @@
 <template>
   <div class="office">
-    <h1>Привіт {{ login }}!</h1>
+    <h1>Привіт {{ login.name }}! Ваш номер телефона {{ login.phone }}</h1>
     <div>
       <form class="sign-up-content" v-on:submit.prevent="changeLogin">
         <h4 class="office-label">Змінити логін</h4>
@@ -47,7 +47,7 @@ import {ref} from "vue";
 
 export default {
   name: "App",
-  inject: ['refreshUser', 'refreshRole'],
+  inject: ['refreshUser', 'refreshRole', 'checkUser'],
   components: {
     NotificationHandler
   },
@@ -66,11 +66,18 @@ export default {
     }
   },
 
-  mounted() {
+  beforeMount() {
+    this.checkActiveUser()
     this.updateUser()
   },
 
   methods: {
+    checkActiveUser() {
+      if (this.checkUser() === false) {
+        this.$router.push('/ ')
+      }
+    },
+
     async updateUser() {
       try {
         this.login = await fetch('http://localhost:3000/currentUser', {
@@ -156,22 +163,44 @@ export default {
 
     async changePhone() {
       try {
-        await fetch('http://localhost:3000/updatePhone', {
+
+        const uniquePhone = await fetch('http://localhost:3000/checkPhone', {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            authorization: localStorage.getItem('Authorization'),
             phone: "+38" + this.phone
-          }),
-        })
+          })
+        }).then(res => res.json())
 
-        this.phone = ''
+        if (uniquePhone === true) {
 
-        this.title = "Успіх!"
-        this.text = "Ваш номер був змінений!"
-        this.isOpen = true
+          await fetch('http://localhost:3000/updatePhone', {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              authorization: localStorage.getItem('Authorization'),
+              phone: "+38" + this.phone
+            })
+          })
+
+          await this.updateUser()
+
+          this.phone = ''
+
+          this.title = "Успіх!"
+          this.text = "Ваш номер був змінений!"
+          this.isOpen = true
+
+        } else {
+          this.title = "Увага!"
+          this.text = "Цей телефон зайнятий!"
+          this.isOpen = true
+        }
+
       } catch (err) {
         this.title = "Увага!"
         this.text = "Ваш номер не був змінений!"

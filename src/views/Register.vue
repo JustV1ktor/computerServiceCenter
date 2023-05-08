@@ -44,6 +44,7 @@ export default {
   components: {
     NotificationHandler
   },
+  inject: ['checkUser'],
   data() {
     return {
       login: '',
@@ -56,7 +57,16 @@ export default {
       nextPage: false
     }
   },
+  beforeMount() {
+    this.checkActiveUser()
+  },
   methods: {
+    checkActiveUser() {
+      if (this.checkUser() === true) {
+        this.$router.push('/ ')
+      }
+    },
+
     async sendPost() {
       try {
         const uniqueLogin = await fetch('http://localhost:3000/checkName', {
@@ -71,41 +81,59 @@ export default {
 
         if (uniqueLogin === true) {
 
+          const uniquePhone = await fetch('http://localhost:3000/checkPhone', {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              phone: "+38" + this.phone
+            })
+          }).then(res => res.json())
+
+          if (uniquePhone === true) {
+
             let userPhone = "+38" + this.phone
 
-              if (this.password === this.passwordToCheck) {
+            if (this.password === this.passwordToCheck) {
 
-                if(this.password.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(this.password)) {
+              if(this.password.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(this.password)) {
 
-                  await fetch('http://localhost:3000/register', {
-                    method: "POST",
-                    headers: {
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      login: this.login,
-                      phone: userPhone,
-                      password: this.password
-                    })
+                await fetch('http://localhost:3000/register', {
+                  method: "POST",
+                  headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    login: this.login,
+                    phone: userPhone,
+                    password: this.password
                   })
+                })
 
-                  this.title = "Успіх!"
-                  this.text = "Ви зареєструвались!"
-                  this.nextPage = true
-                  this.isOpen = true
+                this.title = "Успіх!"
+                this.text = "Ви зареєструвались!"
+                this.nextPage = true
+                this.isOpen = true
 
-                } else {
-                  this.title = "Увага!"
-                  this.text = "Пароль має містити довжину не менше 8 символів! І мати хоча б 1 малу, велику букви і мати 1 спец символ приклад *?!+=-_"
-                  this.isOpen = true
-                }
+              } else {
+                this.title = "Увага!"
+                this.text = "Пароль має містити довжину не менше 8 символів! І мати хоча б 1 малу, велику букви і мати 1 спец символ приклад *?!+=-_"
+                this.isOpen = true
+              }
 
             } else {
               this.title = "Увага!"
               this.text = "Паролі не співпадають! Перевірте паролі!"
               this.isOpen = true
             }
+
+          } else {
+            this.title = "Увага!"
+            this.text = "Цей телефон зайнятий!"
+            this.isOpen = true
+          }
 
         } else {
           this.title = "Увага!"

@@ -8,7 +8,7 @@
         <button class="button-content" type="submit">Ввійти</button>
       </a>
     </form>
-    <label class="">Не зареєстровані? Зареєструйтксь!</label>
+    <label class="">Не зареєстровані? Зареєструйтесь!</label>
     <a href="/register">
       <button class="button-content">Реєстрація</button>
     </a>
@@ -40,7 +40,7 @@ export default {
   components: {
     NotificationHandler
   },
-  inject: ['refreshUser', 'getUserRole', 'refreshRole'],
+  inject: ['refreshUser', 'getUserRole', 'refreshRole', 'checkUser'],
   data() {
     return {
       login: '',
@@ -52,7 +52,16 @@ export default {
       nextPage: false
     }
   },
+  beforeMount() {
+    this.checkActiveUser()
+  },
   methods: {
+    checkActiveUser() {
+      if (this.checkUser() === true) {
+        this.$router.push('/ ')
+      }
+    },
+
     async sendPost() {
       try {
         this.response = await fetch('http://localhost:3000/login', {

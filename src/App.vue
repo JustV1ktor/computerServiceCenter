@@ -49,7 +49,7 @@
               <a class="link" href="/">Головна</a>
             </li>
             <li v-if="userActive === true">
-              <a class="link" href="/personalOffice">Офіс</a>
+              <a class="link" href="/personalOffice">Кабінет</a>
             </li>
             <li v-if="userActive === false">
               <a class="link" href="/login">Ввійти</a>
@@ -86,7 +86,8 @@ export default {
   provide() {
     return {
       refreshUser: this.refreshUser,
-      refreshRole: this.refreshRole
+      refreshRole: this.refreshRole,
+      checkUser: this.checkUser
     }
   },
   mounted() {
@@ -96,6 +97,9 @@ export default {
   methods: {
     refreshUser() {
       this.userActive = !!localStorage.Authorization;
+    },
+    checkUser() {
+      return this.userActive
     },
     refreshRole() {
       this.isAdmin = localStorage.getItem('Admin') === 'true';
