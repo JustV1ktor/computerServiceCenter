@@ -540,7 +540,7 @@ textarea {
 }
 
 .width{
-    width: 250px;
+    width: 210px;
 }
 
 .sad {
@@ -549,6 +549,10 @@ textarea {
 
 .margin {
     margin: 16px;
+}
+
+.history-table-head {
+    width: 688px;
 }
 
 .gap {

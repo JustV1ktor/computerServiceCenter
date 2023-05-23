@@ -41,9 +41,10 @@
 </template>
 
 <script>
-import NotificationHandler from "@/components/NotificationHandler";
-import {REGULAR_EXPRESSIONS} from "@/constant/regularExpression";
-import {ref} from "vue";
+import NotificationHandler from "@/components/NotificationHandler"
+import {REGULAR_EXPRESSIONS} from "@/constant/regularExpression"
+import {fetchToServer} from "@/fetchToServer"
+import {ref} from "vue"
 
 export default {
   name: "App",
@@ -80,17 +81,7 @@ export default {
 
     async updateUser() {
       try {
-        this.login = await fetch('http://localhost:3000/currentUser', {
-          method: "POST",
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            authorization: localStorage.getItem('Authorization')
-          }),
-          mode: "cors"
-        }).then(res => res.json())
+        this.login = await fetchToServer('currentUser', 0)
       } catch (err) {
         console.log(err)
         this.title = "Увага!"
@@ -100,17 +91,8 @@ export default {
     },
 
     async logOut() {
-      await fetch('http://localhost:3000/destroy', {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization')
-        }),
-        mode: "cors"
-      })
+      await fetchToServer('destroy', 1)
+
       localStorage.removeItem('Authorization')
       localStorage.removeItem('Admin')
       this.refreshUser()
@@ -120,27 +102,14 @@ export default {
 
     async changeLogin() {
       try {
-        const uniqueLogin = await fetch('http://localhost:3000/checkName', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            login: this.newLogin
-          })
-        }).then(res => res.json())
+        const uniqueLogin = await fetchToServer('checkName', 0, {
+          login: this.newLogin
+        })
 
         if (uniqueLogin === true) {
-          this.token = await fetch('http://localhost:3000/updateLogin', {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              authorization: localStorage.getItem('Authorization'),
-              newLogin: this.newLogin
-            }),
-          }).then(res => res.json())
+          this.token = await fetchToServer('updateLogin', 0, {
+            newLogin: this.newLogin
+          })
 
           localStorage.setItem('Authorization', this.token)
           await this.updateUser()
@@ -164,27 +133,14 @@ export default {
     async changePhone() {
       try {
 
-        const uniquePhone = await fetch('http://localhost:3000/checkPhone', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phone: "+38" + this.phone
-          })
-        }).then(res => res.json())
+        const uniquePhone = await fetchToServer('checkPhone', 0, {
+          phone: "+38" + this.phone
+        })
 
         if (uniquePhone === true) {
 
-          await fetch('http://localhost:3000/updatePhone', {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              authorization: localStorage.getItem('Authorization'),
-              phone: "+38" + this.phone
-            })
+          await fetchToServer('updatePhone', 1, {
+            phone: "+38" + this.phone
           })
 
           await this.updateUser()
@@ -215,16 +171,10 @@ export default {
 
           if (this.newPassword.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(this.newPassword)) {
 
-            await fetch('http://localhost:3000/updatePassword', {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                authorization: localStorage.getItem('Authorization'),
-                newPassword: this.newPassword
-              }),
+            await fetchToServer('updatePassword', 1, {
+              newPassword: this.newPassword
             })
+
             this.newPassword = ''
             this.newPasswordToCheck = ''
 
@@ -253,7 +203,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

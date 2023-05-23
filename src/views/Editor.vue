@@ -26,8 +26,9 @@
             <th>ID сервісу</th>
             <th>Назва сервісу</th>
             <th>Категорія</th>
-            <th>Опис</th>
+            <th class="width">Опис</th>
             <th>Ціна</th>
+            <th>Відображення</th>
           </tr>
           <tr class="editor-table-tr" v-for="service in services.data" :key="service._id">
             <td>
@@ -49,6 +50,9 @@
             </td>
             <td>
               <input class="editor-field" type="number" v-model="service.price" @focusout="updateService(service._id ,'price', service.price)">
+            </td>
+            <td>
+              <input type="checkbox" :checked="service.isVisible === true" v-on:change="changeVisibility('services', !service.isVisible, service._id)">
             </td>
           </tr>
         </table>
@@ -101,6 +105,7 @@
         <div class="sign-up-content">
           <div v-for="category of categories" :key="category._id">
             <input class="editor-field" v-model="category.name" v-on:input="updateCategory(category._id, category.name)">
+            <input type="checkbox" :checked="category.isVisible === true" v-on:change="changeVisibility('categories', !category.isVisible, category._id)">
           </div>
         </div>
 
@@ -187,7 +192,7 @@
 
       </div>
 
-      <div v-if="editorPage === 1">
+      <div class="full-element-width" v-if="editorPage === 1">
         <h3>Замовлення</h3>
 
         <select class="editor-select" @change="filteredStatus($event)">
@@ -314,8 +319,9 @@
 </template>
 
 <script>
-import NotificationHandler from "@/components/NotificationHandler";
-import {ref} from "vue";
+import NotificationHandler from "@/components/NotificationHandler"
+import {fetchToServer} from "@/fetchToServer"
+import {ref} from "vue"
 
 export default {
   name: "App",
@@ -347,8 +353,7 @@ export default {
       nextPage: false,
       editorPage: 1,
       count: 0,
-      selectedCategory: 0,
-
+      selectedCategory: 0
     }
   },
   updated() {
@@ -356,28 +361,14 @@ export default {
       this.refreshTextareaHeight(textareaNode)
     }
   },
-  beforeMount() {
+  async beforeMount() {
     this.checkActiveUser()
 
-    fetch('http://localhost:3000/getUserRole' , {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        authorization: localStorage.getItem('Authorization')
-      })
-    }).then(res => res.json()).then(data => data === true ? '' : this.$router.push('/ '))
+    if (!await fetchToServer('getUserRole', 0)) {
+      this.$router.push('/ ')
+    }
 
-    fetch('http://localhost:3000/fetchRoles', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        authorization: localStorage.getItem('Authorization')
-      })
-    }).then(res => res.json()).then(data => this.roles = data)
+    this.roles = await fetchToServer('fetchRoles', 0)
 
     this.fetchAllHistory()
     this.checkAdminRole()
@@ -427,15 +418,7 @@ export default {
     async checkAdminRole() {
       this.isAdmin = false
 
-      const currentUser = await fetch('http://localhost:3000/currentUser', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization')
-        })
-      }).then(res => res.json())
+      const currentUser = await fetchToServer('currentUser', 0)
 
       for (const role of this.roles) {
         if (role['_id'] === currentUser['roleID']) {
@@ -448,65 +431,37 @@ export default {
     },
 
     async fetchAllCategories() {
-      fetch('http://localhost:3000/fetchCategories')
-          .then(res => res.json())
-          .then(data => this.categories = data)
+      this.categories = await fetchToServer('fetchCategories', 0, {
+        page: 0,
+        fetchStatus: 0
+      })
     },
 
     async fetchAllHistory() {
       this.count = 0
-      this.allHistory = await fetch('http://localhost:3000/fetchHistory', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: 0,
-          fetchStatus: 0
-        })
-      }).then(res => res.json())
+      this.allHistory = await fetchToServer('fetchHistory', 0,{
+        page: 0,
+        fetchStatus: 0
+      })
     },
 
     async fetchAllServices() {
       this.count = 0
-      this.services = await fetch('http://localhost:3000/fetchData', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: 0,
-          fetchCategoryID: 0
-        })
-      }).then(res => res.json())
+      this.services = await fetchToServer('fetchData', 0,{
+        page: 0,
+        fetchCategoryID: 0
+      })
     },
 
     async fetchUsers() {
       this.count = 0
-      this.users = await fetch('http://localhost:3000/fetchUsers', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: 0
-        })
-      }).then(res => res.json())
+      this.users = await fetchToServer('fetchUsers', 0,{
+        page: 0
+      })
     },
 
     async fetchAllUsers() {
-      this.allUsers = await fetch('http://localhost:3000/fetchAllUsers', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-        })
-      }).then(res => res.json())
+      this.allUsers = await fetchToServer('fetchAllUsers', 0)
     },
 
     async filteredStatus(event) {
@@ -515,93 +470,58 @@ export default {
 
       this.count = 0
 
-      this.allHistory = await fetch('http://localhost:3000/fetchHistory', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: 0,
-          fetchStatus: this.filter
-        })
-      }).then(res => res.json())
+      this.allHistory = await fetchToServer('fetchHistory', 0, {
+        page: 0,
+        fetchStatus: this.filter
+      })
     },
 
     async newOrdersPage(page) {
-
       this.count = this.count + page
 
-      this.allHistory = await fetch('http://localhost:3000/fetchHistory', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
+      this.allHistory = await fetchToServer('fetchHistory', 0, {
+        page: this.count,
+        fetchStatus: this.filter
+      })
+
+      if (this.count > this.allHistory.pageCount - 1) {
+        this.count = this.count - 1
+        this.allHistory = await fetchToServer('fetchHistory', 0, {
           page: this.count,
           fetchStatus: this.filter
         })
-      }).then(res => res.json())
+      }
     },
 
     async newUsersPage(page) {
       this.count = this.count + page
 
-      this.users = await fetch('http://localhost:3000/fetchUsers', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: this.count
-        })
-      }).then(res => res.json())
+      this.users = await fetchToServer('fetchUsers', 0, {
+        page: this.count
+      })
     },
 
     async newServicesPage(page) {
       this.count = this.count + page
 
-      this.services = await fetch('http://localhost:3000/fetchData', {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          page: this.count,
-          fetchCategoryID: this.selectedCategory
-        })
-      }).then(res => res.json())
+      this.services = await fetchToServer('fetchData', 0, {
+        page: this.count,
+        fetchCategoryID: this.selectedCategory
+      })
     },
 
     async createService() {
       try {
-        await fetch('http://localhost:3000/createService', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            authorization: localStorage.getItem('Authorization'),
-            name: this.serviceName,
-            description: this.serviceDescription,
-            price: this.servicePrice,
-            categoryID: this.CategoryID
-          }),
+        await fetchToServer('createService', 1, {
+          name: this.serviceName,
+          description: this.serviceDescription,
+          price: this.servicePrice,
+          categoryID: this.CategoryID
         })
-        this.services = await fetch('http://localhost:3000/fetchData', {
-          method: "POST",
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        this.services = await fetchToServer('fetchData', 0, {
             page: 0,
             fetchCategoryID: 0
           })
-        }).then(res => res.json())
 
         this.serviceName = ''
         this.serviceDescription = ''
@@ -612,6 +532,7 @@ export default {
         this.text = "Новий сервіс створено успішно!"
         this.isOpen = true
       } catch (err) {
+        console.log(err)
         this.title = "Увага!"
         this.text = "Щось пішло не так!"
         this.isOpen = true
@@ -619,38 +540,25 @@ export default {
     },
 
     async updateService(serviceID, type, value) {
-      await fetch('http://localhost:3000/updateService', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          serviceID,
-          type,
-          value
-        }),
+      await fetchToServer('updateService', 1, {
+        serviceID,
+        type,
+        value
       })
     },
 
     async createCategory() {
       try {
-        await fetch('http://localhost:3000/createCategory', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            authorization: localStorage.getItem('Authorization'),
-            name: this.newCategoryName
-          }),
+        await fetchToServer('createCategory', 1, {
+          name: this.newCategoryName
         })
-        this.categories = await fetch('http://localhost:3000/fetchCategories').then(res => res.json())
+
+        this.categories = await fetchToServer('fetchCategories', 0)
 
         this.newCategoryName = ''
 
         this.title = "Успіх!"
-        this.text = "Нова категорія створено успішно!"
+        this.text = "Нову категорію створено успішно!"
         this.isOpen = true
       } catch (err) {
         this.title = "Увага!"
@@ -660,18 +568,20 @@ export default {
     },
 
     async updateCategory(categoryID, name) {
-      await fetch('http://localhost:3000/updateCategory', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          categoryID,
-          name
-        }),
+      await fetchToServer('updateCategory', 1, {
+        categoryID,
+        name
       })
-      this.categories = await fetch('http://localhost:3000/fetchCategories').then(res => res.json())
+
+      this.categories = await fetchToServer('fetchCategories', 0)
+    },
+
+    async changeVisibility(type, isVisible, ID) {
+      await fetchToServer('updateVisibility', 1, {
+        type,
+        isVisible,
+        ID
+      })
     },
 
     changePage(value) {
@@ -679,44 +589,23 @@ export default {
     },
 
     async updateStatus(historyID, value) {
-      await fetch('http://localhost:3000/updateStatus', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          historyID,
-          value
-        }),
+      await fetchToServer('updateStatus', 1, {
+        historyID,
+        value
       })
 
       await this.newOrdersPage(0)
     },
 
     async updateRole(userID, roleID) {
-      await fetch('http://localhost:3000/updateRole', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          userID,
-          roleID
-        }),
+      await fetchToServer('updateRole', 1, {
+        userID,
+        roleID
       })
 
-      this.users = await fetch('http://localhost:3000/fetchUsers', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: this.count
-        })
-      }).then(res => res.json())
+      this.users = await fetchToServer('fetchUsers', 0, {
+        page: this.count
+      })
     }
   }
 }

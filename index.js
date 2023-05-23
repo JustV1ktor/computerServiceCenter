@@ -29,7 +29,7 @@ app.use(express.static('./dist'))
 async function authenticateToken(req, res, next) {
 
     const {
-        body: {authorization}
+        headers: {authorization}
     } = req;
 
     let token
@@ -104,6 +104,7 @@ app.post('/login', async (req, res) => {
 
     } catch (err) {
         console.log(err)
+        res.sendStatus(500)
     }
 })
 
@@ -142,12 +143,14 @@ app.post('/ConfirmServices', authenticateToken, async (req, res) => {
 
     try {
         const currentUser = await users.findOne({name: user})
-        let services = await carts.find({userID: currentUser['_id']})
+        let servicesToCheck = await carts.find({userID: currentUser['_id']})
 
-        await carts.deleteMany({userID: currentUser['_id']})
-
-        for(const service of services) {
-            serviceIDs.push(service['serviceID'])
+        for (const service of servicesToCheck) {
+            let check = await services.findOne({_id: service['serviceID']})
+            if(check.isVisible) {
+                await carts.deleteOne({userID: currentUser['_id'], serviceID: service['serviceID']})
+                serviceIDs.push(service['serviceID'])
+            }
         }
 
         await history.create({
@@ -293,7 +296,8 @@ app.post('/fetchData', async (req, res) => {
     const {
         body: {
             page,
-            fetchCategoryID
+            fetchCategoryID,
+            isVisible = false
         }
     } = req;
 
@@ -302,10 +306,18 @@ app.post('/fetchData', async (req, res) => {
     let filter
     let pageCount
 
-    if (Number(fetchCategoryID) === 0) {
-        filter = {}
+    if (isVisible === false) {
+        if (Number(fetchCategoryID) === 0) {
+            filter = {}
+        } else {
+            filter = {categoryID: fetchCategoryID}
+        }
     } else {
-        filter = {categoryID: fetchCategoryID}
+        if (Number(fetchCategoryID) === 0) {
+            filter = {isVisible: isVisible}
+        } else {
+            filter = {isVisible: isVisible, categoryID: fetchCategoryID}
+        }
     }
 
     try {
@@ -332,7 +344,8 @@ app.post('/fetchData', async (req, res) => {
                         description: service['description'],
                         price: service['price'],
                         category: category['name'],
-                        categoryID: service['categoryID']
+                        categoryID: service['categoryID'],
+                        isVisible: service['isVisible']
                     })
                 }
             }
@@ -367,8 +380,23 @@ app.get('/fetchAllData', async (req, res) => {
     res.end(JSON.stringify(data))
 })
 
-app.get('/fetchCategories', async (req, res) => {
-    res.end(JSON.stringify(await categories.find()))
+app.post('/fetchCategories', async (req, res) => {
+
+    const {
+        body: {
+            isVisible = false
+        }
+    } = req;
+
+    let filter
+
+    if (isVisible === false) {
+        filter = {}
+    } else {
+        filter = {isVisible: isVisible}
+    }
+
+    res.end(JSON.stringify(await categories.find(filter)))
 })
 
 app.post('/updateService', authenticateToken,async (req, res) => {
@@ -383,6 +411,8 @@ app.post('/updateService', authenticateToken,async (req, res) => {
 
     const data = {}
 
+    let visible = false
+
     switch (type) {
         case 'name': data.name = value
             break
@@ -394,7 +424,30 @@ app.post('/updateService', authenticateToken,async (req, res) => {
             break
     }
 
+    const service = await services.findOne({_id: serviceID})
     await services.findOneAndUpdate({_id: serviceID}, data)
+
+    if (type === 'categoryID') {
+
+        let categoriesToCheck = []
+        categoriesToCheck.push(await categories.findOne({_id: service['categoryID']}))
+        categoriesToCheck.push(await categories.findOne({_id: value}))
+        for (const category of categoriesToCheck) {
+            const filteredServices = await services.find({categoryID: category['_id']})
+            for (const service of filteredServices) {
+                if (service['isVisible'] === true) {
+                    visible = true
+                }
+            }
+            if (visible) {
+                await categories.findOneAndUpdate({_id: category['_id']}, {isVisible: true})
+            } else {
+                await categories.findOneAndUpdate({_id: category['_id']}, {isVisible: false})
+            }
+            visible = false
+        }
+    }
+
     res.end()
 })
 
@@ -423,7 +476,7 @@ app.post('/createService', authenticateToken, async (req, res) => {
     } = req;
 
 
-    await services.create({name: name, categoryID: categoryID, description: description, price: price})
+    await services.create({name: name, categoryID: categoryID, description: description, price: price, isVisible: true})
     res.end()
 })
 
@@ -448,7 +501,42 @@ app.post('/createCategory', authenticateToken,async (req, res) => {
         }
     } = req;
 
-    await categories.create({name: name})
+    await categories.create({name: name, isVisible: false})
+    res.end()
+})
+
+app.post('/updateVisibility', authenticateToken, async (req, res) => {
+
+    const {
+        body: {
+            type,
+            isVisible,
+            ID
+        }
+    } = req;
+
+    let visible = false
+
+    if (type === 'categories') {
+        await categories.findOneAndUpdate({_id: ID}, {isVisible: isVisible})
+        await services.updateMany({categoryID: ID}, {isVisible: isVisible})
+    } else {
+        const updatedService = await services.findOneAndUpdate({_id: ID}, {isVisible: isVisible})
+
+        const filteredServices = await services.find({categoryID: updatedService['categoryID']})
+        for (const service of filteredServices) {
+            if (service['isVisible'] === true) {
+                visible = true
+            }
+        }
+
+        if (visible) {
+            await categories.findOneAndUpdate({_id: updatedService['categoryID']}, {isVisible: true})
+        } else {
+            await categories.findOneAndUpdate({_id: updatedService['categoryID']}, {isVisible: false})
+        }
+    }
+
     res.end()
 })
 
@@ -475,8 +563,20 @@ app.post('/fetchCarts', authenticateToken, async (req, res) => {
         user
     } = req;
 
+    const data = []
+
     const currentUser = await users.findOne({name: user})
-    res.end(JSON.stringify(await carts.find({userID: currentUser['_id']})))
+    const currentUserOrders = await carts.find({userID: currentUser['_id']})
+
+    for (const order of currentUserOrders) {
+        for (const service of await services.find({_id: order['serviceID']})) {
+            if (service['isVisible'] === true) {
+                data.push(order)
+            }
+        }
+    }
+
+    res.end(JSON.stringify(data))
 })
 
 app.post('/fetchRoles', authenticateToken, async (req, res) => {

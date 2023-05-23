@@ -19,7 +19,11 @@ const service = new Schema({
     price: {
         type: Number,
         require: true
-    }
+    },
+    isVisible: {
+        type: Boolean,
+        require: true
+    },
 })
 
 module.exports = mongoose.model('Service', service)

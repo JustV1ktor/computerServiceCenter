@@ -49,6 +49,7 @@
       </tr>
 
     </table>
+
     <div v-if="history.data.length === 0">
       <div class="history-no-content">
         <p>
@@ -74,6 +75,8 @@
 </template>
 
 <script>
+import {fetchToServer} from "@/fetchToServer"
+
 export default {
   name: "App",
   inject: ['checkUser'],
@@ -86,18 +89,9 @@ export default {
   async beforeMount() {
     this.checkActiveUser()
 
-    this.history = await fetch('http://localhost:3000/fetchCurrentUserHistory', {
-      method: "POST",
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        authorization: localStorage.getItem('Authorization'),
-        page: 0
-      }),
-      mode: "cors"
-    }).then(res => res.json())
+    this.history = await fetchToServer('fetchCurrentUserHistory',0, {
+      page: 0
+    })
   },
   methods: {
 
@@ -109,22 +103,11 @@ export default {
 
     async newPage(page) {
       this.count = this.count + page
-      this.history = await fetch('http://localhost:3000/fetchCurrentUserHistory', {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization'),
-          page: this.count
-        })
-      }).then(res => res.json())
+
+      this.history = await fetchToServer('fetchCurrentUserHistory', 0, {
+        page: this.count
+      })
     }
   }
 }
 </script>
-
-<style>
-
-</style>

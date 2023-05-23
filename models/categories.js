@@ -7,6 +7,10 @@ const categories = new Schema({
         type: String,
         require: true
     },
+    isVisible: {
+        type: Boolean,
+        require: true
+    }
 })
 
 module.exports = mongoose.model('Categories', categories)

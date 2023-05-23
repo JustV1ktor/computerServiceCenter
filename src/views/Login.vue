@@ -32,8 +32,9 @@
 </template>
 
 <script>
-import NotificationHandler from "@/components/NotificationHandler";
-import {ref} from "vue";
+import NotificationHandler from "@/components/NotificationHandler"
+import {fetchToServer} from "@/fetchToServer"
+import {ref} from "vue"
 
 export default {
   name: "App",
@@ -64,18 +65,12 @@ export default {
 
     async sendPost() {
       try {
-        this.response = await fetch('http://localhost:3000/login', {
-          method: "POST",
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            login: this.login,
-            password: this.password
-          }),
-          mode: "cors"
-        }).then(res => res.json())
+
+        this.response = await fetchToServer('login', 0,{
+              login: this.login,
+              password: this.password
+            }
+        )
 
         localStorage.setItem('Authorization', this.response.accessToken)
 

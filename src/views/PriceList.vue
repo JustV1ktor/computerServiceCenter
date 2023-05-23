@@ -1,12 +1,15 @@
 <template>
-  <div class="item">
+  <div class="item" v-if="services">
     <h1>Прайс лист</h1>
-    <label>Пошук по категоріям</label>
-    <select class="editor-select" @change="fetchFilteredServices($event)">
-      <option v-for="category in categories" :key="category._id" v-bind:value="category._id">{{ category.name }}</option>
-    </select>
 
-    <div>
+    <div class="burger-button-container" v-if="services.data.length > 0">
+      <label>Пошук по категоріям</label>
+      <select class="editor-select" @change="fetchFilteredServices($event)">
+        <option v-for="category in categories" :key="category._id" v-bind:value="category._id">{{ category.name }}</option>
+      </select>
+    </div>
+
+    <div v-if="services.data.length > 0">
       <label>Сторінка {{ count + 1 }} з {{ services.pageCount }}</label>
       <div>
         <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
@@ -14,7 +17,7 @@
       </div>
     </div>
 
-    <table class="table">
+    <table class="table" v-if="services.data.length > 0">
       <thead>
       <tr class="table-head">
         <th>Назва сервісу</th>
@@ -41,6 +44,16 @@
         </td>
       </tr>
     </table>
+
+    <div v-if="services.data.length === 0">
+      <div class="history-no-content">
+        <p>
+          На даний момент проводяться техічні роботи. <br>
+          Будь ласка зачекайте!
+        </p>
+      </div>
+    </div>
+
     <div class="cart-outer" :class="[cart.length >= 1 ? 'show' : '']">
       <div class="cart-inner">
         <h4>Кошик:</h4>
@@ -52,7 +65,7 @@
       </div>
     </div>
 
-    <div>
+    <div v-if="services.data.length > 0">
       <label>Сторінка {{ count + 1 }} з {{ services.pageCount }}</label>
       <div>
         <button class="button-content" v-if="count > 0" @click="newPage(-1)">Попередня</button>
@@ -60,7 +73,7 @@
       </div>
     </div>
 
-    <div class="button-row" v-if="activeUser === true">
+    <div class="button-row" v-if="activeUser === true && checkedIDs.length > 0">
       <form v-on:submit.prevent="sendPostConfirmService(totalSum)">
         <button class="button-content" type="submit">Замовити!</button>
       </form>
@@ -85,8 +98,9 @@
 </template>
 
 <script>
-import NotificationHandler from "@/components/NotificationHandler";
-import {ref} from "vue";
+import NotificationHandler from "@/components/NotificationHandler"
+import {fetchToServer} from "@/fetchToServer"
+import {ref} from "vue"
 
 export default {
   name: "App",
@@ -97,7 +111,7 @@ export default {
   data() {
     return {
       activeUser: Boolean,
-      services: [],
+      services: null,
       allServices: [],
       selectedCategory: 0,
       categories: [],
@@ -135,28 +149,22 @@ export default {
       return cartData
     },
   },
-  beforeMount() {
+  async beforeMount() {
     fetch('http://localhost:3000/fetchAllData')
         .then(res => res.json())
         .then(data => this.allServices = data)
 
-    fetch('http://localhost:3000/fetchData', {
-      method: "POST",
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        page: 0,
-        fetchCategoryID: 0
-      })
-    }).then(res => res.json()).then(data => this.services = data)
+    this.services = await fetchToServer('fetchData', 0,{
+      page: 0,
+      fetchCategoryID: 0,
+      isVisible: true
+    })
 
-    fetch('http://localhost:3000/fetchCategories')
-        .then(res => res.json())
-        .then(data => {
-          this.categories.push({_id: 0, name: 'всі'}, ...data)
-        })
+    const data = await fetchToServer('fetchCategories', 0, {
+      isVisible: true
+    })
+
+    this.categories.push({_id: 0, name: 'всі'}, ...data)
     this.fetchUser()
   },
   methods: {
@@ -165,32 +173,20 @@ export default {
       this.selectedCategory = event.target.value
       this.count = 0
 
-      this.services = await fetch('http://localhost:3000/fetchData', {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fetchCategoryID: event.target.value
-        })
-      }).then(res => res.json())
+      this.services = await fetchToServer('fetchData', 0, {
+        fetchCategoryID: event.target.value,
+        isVisible: true
+      })
     },
 
     async newPage(page) {
       this.count = this.count + page
 
-      this.services = await fetch('http://localhost:3000/fetchData', {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          page: this.count,
-          fetchCategoryID: this.selectedCategory
-        })
-      }).then(res => res.json())
+      this.services = await fetchToServer('fetchData', 0, {
+        page: this.count,
+        fetchCategoryID: this.selectedCategory,
+        isVisible: true
+      })
     },
 
     fetchUser() {
@@ -203,21 +199,10 @@ export default {
     },
 
     async fetchCart() {
-      fetch('http://localhost:3000/fetchCarts', {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          authorization: localStorage.getItem('Authorization')
-        }),
-        mode: "cors"
-      }).then(res => res.json()).then(data => {
+      const data = await fetchToServer('fetchCarts', 0)
         for (const service of data) {
           this.checkedIDs.push(service['serviceID'])
         }
-      })
     },
 
     async sendPostAddService(serviceID) {
@@ -225,15 +210,8 @@ export default {
       this.checkedIDs.push(serviceID)
 
       try {
-        await fetch('http://localhost:3000/AddServiceToCart', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            authorization: localStorage.getItem('Authorization'),
-            serviceID: serviceID
-          })
+        await fetchToServer('AddServiceToCart', 1, {
+          serviceID
         })
       } catch (err) {
         console.log(err)
@@ -245,15 +223,8 @@ export default {
       this.checkedIDs = this.checkedIDs.filter(e => e !== serviceID)
 
       try {
-        await fetch('http://localhost:3000/DeleteService', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            authorization: localStorage.getItem('Authorization'),
-            serviceID: serviceID
-          })
+        await fetchToServer('DeleteService', 1, {
+          serviceID
         })
       } catch (err) {
         console.log(err)
@@ -261,30 +232,17 @@ export default {
     },
 
     async sendPostConfirmService(totalSum) {
-      if (this.checkedIDs.length >= 1) {
-        try {
-          await fetch('http://localhost:3000/ConfirmServices', {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              authorization: localStorage.getItem('Authorization'),
-              totalSum: totalSum
-            })
-          })
+      try {
+        await fetchToServer('ConfirmServices', 1, {
+          totalSum
+        })
 
-          this.title = "Успіх!"
-          this.text = "Дякуємо! Найближчим часом з вами зв'яжеться наш оператор для підтвердження замовлення!"
-          this.isOpen = true
-        } catch (err) {
-          this.title = "Увага!"
-          this.text = "Щось пішло не так!"
-          this.isOpen = true
-        }
-      } else {
+        this.title = "Успіх!"
+        this.text = "Дякуємо! Найближчим часом з вами зв'яжеться наш оператор для підтвердження замовлення!"
+        this.isOpen = true
+      } catch (err) {
         this.title = "Увага!"
-        this.text = "Ви не вибрали нічого! Виберіть щось і купіть!"
+        this.text = "Щось пішло не так!"
         this.isOpen = true
       }
       this.checkedIDs = []
@@ -292,7 +250,3 @@ export default {
   }
 }
 </script>
-
-<style>
-
-</style>

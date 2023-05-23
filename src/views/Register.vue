@@ -35,9 +35,10 @@
 
 </template>
 <script>
-import NotificationHandler from "@/components/NotificationHandler";
-import {REGULAR_EXPRESSIONS} from "@/constant/regularExpression";
-import {ref} from "vue";
+import NotificationHandler from "@/components/NotificationHandler"
+import {REGULAR_EXPRESSIONS} from "@/constant/regularExpression"
+import {fetchToServer} from "@/fetchToServer"
+import {ref} from "vue"
 
 export default {
   name: "App",
@@ -69,27 +70,15 @@ export default {
 
     async sendPost() {
       try {
-        const uniqueLogin = await fetch('http://localhost:3000/checkName', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            login: this.login
-          })
-        }).then(res => res.json())
+        const uniqueLogin = await fetchToServer('checkName', 0, {
+          login: this.login
+        })
 
         if (uniqueLogin === true) {
 
-          const uniquePhone = await fetch('http://localhost:3000/checkPhone', {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              phone: "+38" + this.phone
-            })
-          }).then(res => res.json())
+          const uniquePhone = await fetchToServer('checkPhone', 0, {
+            phone: "+38" + this.phone
+          })
 
           if (uniquePhone === true) {
 
@@ -99,17 +88,10 @@ export default {
 
               if(this.password.length > 7 && REGULAR_EXPRESSIONS.PASSWORD.test(this.password)) {
 
-                await fetch('http://localhost:3000/register', {
-                  method: "POST",
-                  headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    login: this.login,
-                    phone: userPhone,
-                    password: this.password
-                  })
+                await fetchToServer('register', 1, {
+                  login: this.login,
+                  phone: userPhone,
+                  password: this.password
                 })
 
                 this.title = "Успіх!"
@@ -157,7 +139,3 @@ export default {
 }
 
 </script>
-
-<style scoped>
-
-</style>
